@@ -37,6 +37,23 @@ const MIGRATIONS: readonly string[] = [
 
   CREATE INDEX import_runs_status ON import_runs (status);
   `,
+  // 2. Общий пароль входа и сессии.
+  `
+  CREATE TABLE auth (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    password_hash TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE sessions (
+    id TEXT PRIMARY KEY,           -- SHA-256 от токена из cookie; сам токен не хранится
+    created_at TEXT NOT NULL,
+    last_seen_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL
+  );
+
+  CREATE INDEX sessions_expires_at ON sessions (expires_at);
+  `,
 ];
 
 export function openAppDb(filePath: string): AppDatabase {

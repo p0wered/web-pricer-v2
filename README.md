@@ -63,12 +63,30 @@ PRICER_XLSX=/путь/к/Pricer.xlsm PRICER_CATALOG=data/catalog.sqlite npm test
 
 ## Запуск в Docker
 
+Скопируйте `.env.example` в `.env` и заполните `APP_SECRET` и `APP_INITIAL_PASSWORD`
+(подробности — в комментариях файла), затем:
+
 ```bash
 docker compose up -d --build
 ```
 
-Приложение будет доступно на `http://localhost:9091`. Импорт внутри контейнера:
+Приложение будет доступно на `http://localhost:9091`.
+
+## Команды администратора
+
+В Docker команды выполняются так: `docker compose exec webpricer2 webpricer <команда>`,
+локально — `npm run cli -- <команда>`.
+
+| Команда                | Что делает                                                    |
+| ---------------------- | ------------------------------------------------------------- |
+| `import`               | Скачать файл по настройкам импорта и загрузить данные         |
+| `import --file <путь>` | Загрузить данные из локального файла                          |
+| `password`             | Сменить пароль входа (спросит текущий, новый и подтверждение) |
+| `password --reset`     | Задать пароль входа без текущего (если он утерян)             |
+| `schedule`             | Показать расписание импорта и время следующего запуска        |
+
+Если сервер не стартует из-за незаданного пароля, пароль задаётся так:
 
 ```bash
-docker compose exec webpricer2 webpricer import
+docker compose run --rm webpricer2 webpricer password --reset
 ```

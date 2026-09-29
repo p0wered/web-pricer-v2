@@ -24,7 +24,15 @@ export interface ImportOptions {
   trigger: ImportTrigger;
   /** Импорт из локального файла вместо скачивания по настройкам (CLI, тесты, замеры). */
   file?: string;
+  /**
+   * Запуск, уже созданный {@link acquireImportRun}: API берёт блокировку сам, чтобы сразу
+   * ответить номером запуска, а импорт выполняется в отдельном потоке.
+   */
+  runId?: number;
 }
+
+/** Через сколько без heartbeat запуск считается брошенным упавшим процессом. */
+export const STALE_RUN_AFTER_MS = 2 * 60_000;
 
 export interface ImportDeps {
   appDb: AppDatabase;
@@ -94,6 +102,20 @@ export function acquireImportRun(
     .immediate();
 }
 
+/** Помечает запуск ошибкой, если он ещё не завершён (например, упал поток импорта). */
+export function markImportRunFailed(
+  db: AppDatabase,
+  runId: number,
+  code: ImportErrorCode,
+  message: string,
+): void {
+  db.prepare(
+    `UPDATE import_runs
+     SET status = 'failed', finished_at = ?, error_code = ?, error_message = ?
+     WHERE id = ? AND status = 'running'`,
+  ).run(now(), code, message, runId);
+}
+
 function toImportError(error: unknown): ImportError {
   if (error instanceof ImportError) return error;
   if (error instanceof XlsxFormatError) {
@@ -115,7 +137,9 @@ export async function runImport(
   const startedAt = Date.now();
 
   ensureDataDirs(paths);
-  const runId = acquireImportRun(appDb, options.trigger, deps.staleAfterMs ?? 2 * 60_000);
+  const runId =
+    options.runId ??
+    acquireImportRun(appDb, options.trigger, deps.staleAfterMs ?? STALE_RUN_AFTER_MS);
 
   const setStage = appDb.prepare('UPDATE import_runs SET stage = ?, heartbeat_at = ? WHERE id = ?');
   const heartbeat = setInterval(() => {

@@ -4,7 +4,7 @@ import path from 'node:path';
 import { searchResponseSchema } from '@webpricer/shared';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildApp } from '../app.ts';
-import type { AppConfig } from '../config.ts';
+import { testConfig } from '../test-support/test-config.ts';
 import { openAppDb } from '../db/app-db.ts';
 import { runImport } from '../import/import-runner.ts';
 import { dataPaths } from '../paths.ts';
@@ -14,16 +14,7 @@ import { samplePricerSheets, writeXlsx } from '../test-support/xlsx-fixture.ts';
 
 const root = mkdtempSync(path.join(tmpdir(), 'webpricer-api-'));
 const paths = dataPaths(path.join(root, 'data'));
-const config: AppConfig = {
-  host: '127.0.0.1',
-  port: 0,
-  logLevel: 'silent',
-  trustProxy: true,
-  webDistDir: path.join(root, 'no-dist'),
-  dataDir: paths.dataDir,
-  appSecret: undefined,
-  searchCacheSize: 10,
-};
+const config = testConfig({ dataDir: paths.dataDir });
 const appDb = openAppDb(':memory:');
 const catalog = new CatalogStore({ catalogPath: paths.catalogDb });
 const app = await buildApp(config, { searchService: new SearchService(catalog) });

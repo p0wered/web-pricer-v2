@@ -6,11 +6,16 @@ services:
     ports:
       # Тот же внешний порт, что у старой версии: прокси заказчика перенастраивать не нужно.
       - '9091:3000'
+    # Значения берутся из файла .env рядом с этим файлом (см. .env.example).
     environment:
       TZ: Europe/Moscow
-      LOG_LEVEL: ${LOG_LEVEL:-info}
-      TRUST_PROXY: ${TRUST_PROXY:-true}
       APP_SECRET: ${APP_SECRET:-}
+      APP_INITIAL_PASSWORD: ${APP_INITIAL_PASSWORD:-}
+      SESSION_TTL_MINUTES: ${SESSION_TTL_MINUTES:-120}
+      TRUST_PROXY: ${TRUST_PROXY:-true}
+      COOKIE_SECURE: ${COOKIE_SECURE:-auto}
+      SCHEDULE_TIMEZONE: ${SCHEDULE_TIMEZONE:-Europe/Moscow}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
       SEARCH_CACHE_SIZE: ${SEARCH_CACHE_SIZE:-100}
     volumes:
       - ./data:/app/data

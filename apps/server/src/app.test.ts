@@ -4,21 +4,12 @@ import path from 'node:path';
 import { healthResponseSchema } from '@webpricer/shared';
 import { afterAll, describe, expect, it } from 'vitest';
 import { buildApp } from './app.ts';
-import type { AppConfig } from './config.ts';
+import { testConfig } from './test-support/test-config.ts';
 
 const webDistDir = mkdtempSync(path.join(tmpdir(), 'webpricer-dist-'));
 writeFileSync(path.join(webDistDir, 'index.html'), '<!doctype html><title>WebPricer</title>');
 
-const config: AppConfig = {
-  host: '127.0.0.1',
-  port: 0,
-  logLevel: 'silent',
-  trustProxy: true,
-  webDistDir,
-  dataDir: path.join(webDistDir, 'data'),
-  appSecret: undefined,
-  searchCacheSize: 0,
-};
+const config = testConfig({ webDistDir });
 
 afterAll(() => rmSync(webDistDir, { recursive: true, force: true }));
 
