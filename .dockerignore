@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+data
+.env
+.git
+.idea
+.DS_Store
+coverage
+docs
+tools
+*.log

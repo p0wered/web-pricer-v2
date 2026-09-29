@@ -1,0 +1,14 @@
+services:
+  webpricer2:
+    build: .
+    container_name: webpricer2
+    restart: unless-stopped
+    ports:
+      # Тот же внешний порт, что у старой версии: прокси заказчика перенастраивать не нужно.
+      - '9091:3000'
+    environment:
+      TZ: Europe/Moscow
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      TRUST_PROXY: ${TRUST_PROXY:-true}
+    volumes:
+      - ./data:/app/data
