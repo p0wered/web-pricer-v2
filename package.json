@@ -10,7 +10,7 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "concurrently -n server,web -c blue,magenta \"npm run dev -w @webpricer/server\" \"npm run dev -w @webpricer/web\"",
+    "dev": "concurrently -n server,web -c blue,magenta \"PORT=3000 npm run dev -w @webpricer/server\" \"npm run dev -w @webpricer/web\"",
     "build": "npm run build -w @webpricer/web",
     "start": "npm run start -w @webpricer/server",
     "typecheck": "npm run typecheck --workspaces --if-present",

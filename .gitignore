@@ -6,3 +6,8 @@ data/
 .DS_Store
 .idea/
 coverage/
+
+# Рабочие файлы скилла impeccable (страницы выбора, ревью)
+.impeccable/questions/
+.impeccable/decision/
+.impeccable/review/

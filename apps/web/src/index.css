@@ -1,1 +1,209 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/inter';
+
+/* Тёмная тема — класс .dark на <html> (ставится до отрисовки скриптом в index.html). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Токены: нейтральные холодные серые + один синий акцент (действие, фокус, выделение).
+ * Красный — только стоп-лист STOP. Цвета поставщиков — приглушённые метки-точки.
+ */
+:root {
+  color-scheme: light;
+  --bg: #f1f2f4;
+  --surface: #ffffff;
+  --surface-sunken: #f4f4f5;
+  --line: #e4e4e7;
+  --line-strong: #d4d4d8;
+  --fg: #18181b;
+  --muted: #52525b;
+  --subtle: #6b6b74;
+  --row-hover: #f4f5f7;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-fg: #ffffff;
+  --accent-text: #1d4ed8;
+  --accent-soft: #eef3fe;
+  --selection: #d6e3fd;
+  --danger: #b42318;
+  --danger-soft: #fef3f2;
+  --success: #067647;
+  --success-soft: #ecfdf3;
+  --stop-fg: #b42318;
+  --stop-bg: #fef4f3;
+  --stop-bg-hover: #fdeceb;
+  --shadow-popover: 0 8px 24px -6px rgb(24 24 27 / 0.14), 0 2px 6px -2px rgb(24 24 27 / 0.08);
+  --shadow-card: 0 1px 2px rgb(24 24 27 / 0.05), 0 1px 3px -1px rgb(24 24 27 / 0.04);
+
+  --sup-0: #2f6fd8;
+  --sup-1: #0e9384;
+  --sup-2: #c4320a;
+  --sup-3: #7a5af8;
+  --sup-4: #ca8504;
+  --sup-5: #dd2590;
+  --sup-6: #4e8a2b;
+  --sup-7: #0086c9;
+  --sup-8: #9e5c2f;
+  --sup-9: #5d6b98;
+  --sup-10: #c11574;
+  --sup-11: #15803d;
+}
+
+.dark {
+  color-scheme: dark;
+  --bg: #09090b;
+  --surface: #141416;
+  --surface-sunken: #1a1a1d;
+  --line: #26262b;
+  --line-strong: #34343a;
+  --fg: #ececef;
+  --muted: #a8a8b1;
+  --subtle: #8c8c96;
+  --row-hover: #1b1c20;
+  --accent: #3b6fe0;
+  --accent-hover: #4a7cec;
+  --accent-fg: #ffffff;
+  --accent-text: #7ea6ff;
+  --accent-soft: #172036;
+  --selection: #253a66;
+  --danger: #ff7a70;
+  --danger-soft: #2a1614;
+  --success: #47cd89;
+  --success-soft: #102419;
+  --stop-fg: #ff8a80;
+  --stop-bg: #221413;
+  --stop-bg-hover: #2b1917;
+  --shadow-popover: 0 12px 32px -8px rgb(0 0 0 / 0.6), 0 2px 8px -2px rgb(0 0 0 / 0.5);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
+
+  --sup-0: #6d9cf3;
+  --sup-1: #2ed3b7;
+  --sup-2: #f38744;
+  --sup-3: #a48afb;
+  --sup-4: #f5c542;
+  --sup-5: #f670c7;
+  --sup-6: #86cb5c;
+  --sup-7: #36bffa;
+  --sup-8: #d69866;
+  --sup-9: #98a2c9;
+  --sup-10: #ee46bc;
+  --sup-11: #4ade80;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-sunken: var(--surface-sunken);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-row-hover: var(--row-hover);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-text: var(--accent-text);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-stop-fg: var(--stop-fg);
+  --color-stop-bg: var(--stop-bg);
+  --color-stop-bg-hover: var(--stop-bg-hover);
+  --shadow-popover: var(--shadow-popover);
+  --shadow-card: var(--shadow-card);
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.45;
+    /* Inter: табличные цифры по умолчанию не нужны, их включаем в таблицах и счётчиках. */
+    font-feature-settings: 'cv11', 'ss03';
+    -webkit-font-smoothing: antialiased;
+    caret-color: var(--accent);
+    accent-color: var(--accent);
+  }
+
+  ::selection {
+    background: var(--selection);
+    color: var(--fg);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+  }
+
+  input::placeholder {
+    color: var(--subtle);
+  }
+
+  a {
+    text-underline-offset: 3px;
+  }
+}
+
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Полоса «идёт загрузка» в заголовке панели: появляется только если ответ задерживается. */
+@keyframes progress-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+@keyframes progress-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.progress-bar {
+  animation: progress-appear 120ms ease-out 150ms both;
+}
+
+.progress-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: var(--accent);
+  animation: progress-slide 1.1s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-bar::after {
+    animation: none;
+    width: 100%;
+    opacity: 0.6;
+  }
+}
