@@ -1,0 +1,477 @@
+{
+  "baseUrl": "http://localhost:9090",
+  "rounds": 3,
+  "measuredAt": "2026-09-29T12:32:25.319Z",
+  "results": [
+    {
+      "group": "Серия / номинал целиком",
+      "query": "кт315",
+      "status": 200,
+      "coldMs": 1035,
+      "warmMs": 21,
+      "bytes": 259288,
+      "main": 637,
+      "special": 1
+    },
+    {
+      "group": "Серия / номинал целиком",
+      "query": "кт315г",
+      "status": 200,
+      "coldMs": 1012,
+      "warmMs": 9,
+      "bytes": 50680,
+      "main": 114,
+      "special": 1
+    },
+    {
+      "group": "Серия / номинал целиком",
+      "query": "кт361б",
+      "status": 200,
+      "coldMs": 1052,
+      "warmMs": 10,
+      "bytes": 49366,
+      "main": 126,
+      "special": 0
+    },
+    {
+      "group": "Серия / номинал целиком",
+      "query": "кт805",
+      "status": 200,
+      "coldMs": 1023,
+      "warmMs": 15,
+      "bytes": 162266,
+      "main": 379,
+      "special": 0
+    },
+    {
+      "group": "Серия / номинал целиком",
+      "query": "кт827а",
+      "status": 200,
+      "coldMs": 1042,
+      "warmMs": 8,
+      "bytes": 38531,
+      "main": 92,
+      "special": 0
+    },
+    {
+      "group": "Серия / номинал целиком",
+      "query": "140уд7",
+      "status": 200,
+      "coldMs": 1038,
+      "warmMs": 17,
+      "bytes": 190701,
+      "main": 379,
+      "special": 79
+    },
+    {
+      "group": "Серия / номинал целиком",
+      "query": "564ир2",
+      "status": 200,
+      "coldMs": 1032,
+      "warmMs": 15,
+      "bytes": 177952,
+      "main": 411,
+      "special": 2
+    },
+    {
+      "group": "Серия / номинал целиком",
+      "query": "1533ла3",
+      "status": 200,
+      "coldMs": 1039,
+      "warmMs": 13,
+      "bytes": 124639,
+      "main": 290,
+      "special": 16
+    },
+    {
+      "group": "Серия / номинал целиком",
+      "query": "кр580вм80а",
+      "status": 200,
+      "coldMs": 1030,
+      "warmMs": 8,
+      "bytes": 27513,
+      "main": 61,
+      "special": 0
+    },
+    {
+      "group": "Серия / номинал целиком",
+      "query": "133ла3",
+      "status": 200,
+      "coldMs": 1051,
+      "warmMs": 13,
+      "bytes": 125707,
+      "main": 280,
+      "special": 27
+    },
+    {
+      "group": "Серия / номинал целиком",
+      "query": "к155ла3",
+      "status": 200,
+      "coldMs": 1022,
+      "warmMs": 8,
+      "bytes": 32435,
+      "main": 76,
+      "special": 0
+    },
+    {
+      "group": "Серия / номинал целиком",
+      "query": "гу-50",
+      "status": 200,
+      "coldMs": 1022,
+      "warmMs": 10,
+      "bytes": 65786,
+      "main": 141,
+      "special": 7
+    },
+    {
+      "group": "Серия / номинал целиком",
+      "query": "6п14п",
+      "status": 200,
+      "coldMs": 1015,
+      "warmMs": 9,
+      "bytes": 60754,
+      "main": 131,
+      "special": 5
+    },
+    {
+      "group": "Серия / номинал целиком",
+      "query": "шр28п7эг9",
+      "status": 200,
+      "coldMs": 1048,
+      "warmMs": 35,
+      "bytes": 651159,
+      "main": 1355,
+      "special": 9
+    },
+    {
+      "group": "Серия / номинал целиком",
+      "query": "рэс60",
+      "status": 200,
+      "coldMs": 1044,
+      "warmMs": 25,
+      "bytes": 366870,
+      "main": 728,
+      "special": 108
+    },
+    {
+      "group": "Серия / номинал целиком",
+      "query": "рэс47",
+      "status": 200,
+      "coldMs": 1049,
+      "warmMs": 26,
+      "bytes": 442162,
+      "main": 615,
+      "special": 375
+    },
+    {
+      "group": "Семейство + параметры",
+      "query": "к52 33мкф",
+      "status": 200,
+      "coldMs": 1047,
+      "warmMs": 29,
+      "bytes": 519830,
+      "main": 1095,
+      "special": 29
+    },
+    {
+      "group": "Семейство + параметры",
+      "query": "к52-1 50в 15мкф",
+      "status": 200,
+      "coldMs": 1013,
+      "warmMs": 9,
+      "bytes": 71296,
+      "main": 152,
+      "special": 0
+    },
+    {
+      "group": "Семейство + параметры",
+      "query": "к50-35 1000мкф 16в",
+      "status": 200,
+      "coldMs": 1021,
+      "warmMs": 7,
+      "bytes": 28561,
+      "main": 56,
+      "special": 0
+    },
+    {
+      "group": "Семейство + параметры",
+      "query": "к73-17 0,1 мкф 630в",
+      "status": 200,
+      "coldMs": 1026,
+      "warmMs": 10,
+      "bytes": 77880,
+      "main": 159,
+      "special": 0
+    },
+    {
+      "group": "Семейство + параметры",
+      "query": "к73-17 0.1",
+      "status": 200,
+      "coldMs": 1044,
+      "warmMs": 22,
+      "bytes": 358012,
+      "main": 762,
+      "special": 0
+    },
+    {
+      "group": "Семейство + параметры",
+      "query": "к10-17 мп0 1000пф",
+      "status": 200,
+      "coldMs": 1010,
+      "warmMs": 7,
+      "bytes": 29603,
+      "main": 54,
+      "special": 0
+    },
+    {
+      "group": "Семейство + параметры",
+      "query": "с2-33н 0.25 10к",
+      "status": 200,
+      "coldMs": 1031,
+      "warmMs": 10,
+      "bytes": 106064,
+      "main": 203,
+      "special": 4
+    },
+    {
+      "group": "Семейство + параметры",
+      "query": "с2-33 1,5ком",
+      "status": 200,
+      "coldMs": 1003,
+      "warmMs": 7,
+      "bytes": 2804,
+      "main": 4,
+      "special": 2
+    },
+    {
+      "group": "Семейство + параметры",
+      "query": "млт-0,25 1к",
+      "status": 200,
+      "coldMs": 1010,
+      "warmMs": 6,
+      "bytes": 1980,
+      "main": 3,
+      "special": 1
+    },
+    {
+      "group": "Семейство + параметры",
+      "query": "сп5-2 10к",
+      "status": 200,
+      "coldMs": 1024,
+      "warmMs": 16,
+      "bytes": 207809,
+      "main": 386,
+      "special": 37
+    },
+    {
+      "group": "Семейство + параметры",
+      "query": "0.5гд-37",
+      "status": 200,
+      "coldMs": 1026,
+      "warmMs": 6,
+      "bytes": 2876,
+      "main": 5,
+      "special": 0
+    },
+    {
+      "group": "Полное обозначение",
+      "query": "2рмт22кпн10ш1в1в",
+      "status": 200,
+      "coldMs": 1033,
+      "warmMs": 15,
+      "bytes": 209542,
+      "main": 423,
+      "special": 5
+    },
+    {
+      "group": "Полное обозначение",
+      "query": "снц23-10/18в-2-в",
+      "status": 200,
+      "coldMs": 1011,
+      "warmMs": 8,
+      "bytes": 44683,
+      "main": 38,
+      "special": 56
+    },
+    {
+      "group": "Полное обозначение",
+      "query": "онц-бс-2-19/18",
+      "status": 200,
+      "coldMs": 1012,
+      "warmMs": 8,
+      "bytes": 57047,
+      "main": 84,
+      "special": 31
+    },
+    {
+      "group": "Полное обозначение",
+      "query": "тпп201-127-220-50",
+      "status": 200,
+      "coldMs": 1008,
+      "warmMs": 7,
+      "bytes": 4236,
+      "main": 9,
+      "special": 0
+    },
+    {
+      "group": "Латиница вместо кириллицы",
+      "query": "KT315",
+      "status": 200,
+      "coldMs": 994,
+      "warmMs": 6,
+      "bytes": 314,
+      "main": 0,
+      "special": 0
+    },
+    {
+      "group": "Латиница вместо кириллицы",
+      "query": "K52-1 50в",
+      "status": 200,
+      "coldMs": 994,
+      "warmMs": 6,
+      "bytes": 334,
+      "main": 0,
+      "special": 0
+    },
+    {
+      "group": "Латиница вместо кириллицы",
+      "query": "2PMT22",
+      "status": 200,
+      "coldMs": 1012,
+      "warmMs": 6,
+      "bytes": 316,
+      "main": 0,
+      "special": 0
+    },
+    {
+      "group": "Широкие запросы",
+      "query": "к52",
+      "status": 500,
+      "coldMs": 1297,
+      "warmMs": 1302,
+      "bytes": 6609,
+      "main": null,
+      "special": null
+    },
+    {
+      "group": "Широкие запросы",
+      "query": "к50",
+      "status": 500,
+      "coldMs": 1432,
+      "warmMs": 1441,
+      "bytes": 6609,
+      "main": null,
+      "special": null
+    },
+    {
+      "group": "Широкие запросы",
+      "query": "к10-17",
+      "status": 500,
+      "coldMs": 1493,
+      "warmMs": 1508,
+      "bytes": 6609,
+      "main": null,
+      "special": null
+    },
+    {
+      "group": "Широкие запросы",
+      "query": "с2-33",
+      "status": 500,
+      "coldMs": 2086,
+      "warmMs": 2099,
+      "bytes": 6609,
+      "main": null,
+      "special": null
+    },
+    {
+      "group": "Широкие запросы",
+      "query": "млт",
+      "status": 500,
+      "coldMs": 1491,
+      "warmMs": 1509,
+      "bytes": 6609,
+      "main": null,
+      "special": null
+    },
+    {
+      "group": "Широкие запросы",
+      "query": "сп3-19",
+      "status": 200,
+      "coldMs": 1166,
+      "warmMs": 99,
+      "bytes": 2232685,
+      "main": 4783,
+      "special": 117
+    },
+    {
+      "group": "Широкие запросы",
+      "query": "2рм",
+      "status": 500,
+      "coldMs": 2875,
+      "warmMs": 2834,
+      "bytes": 6609,
+      "main": null,
+      "special": null
+    },
+    {
+      "group": "Широкие запросы",
+      "query": "140уд",
+      "status": 200,
+      "coldMs": 1214,
+      "warmMs": 114,
+      "bytes": 2351113,
+      "main": 5172,
+      "special": 463
+    },
+    {
+      "group": "Широкие запросы",
+      "query": "км-5",
+      "status": 200,
+      "coldMs": 1025,
+      "warmMs": 14,
+      "bytes": 167703,
+      "main": 288,
+      "special": 75
+    },
+    {
+      "group": "Слова",
+      "query": "реле",
+      "status": 200,
+      "coldMs": 1199,
+      "warmMs": 129,
+      "bytes": 3329652,
+      "main": 6081,
+      "special": 38
+    },
+    {
+      "group": "Слова",
+      "query": "разъем",
+      "status": 200,
+      "coldMs": 1341,
+      "warmMs": 209,
+      "bytes": 5845067,
+      "main": 10129,
+      "special": 30
+    },
+    {
+      "group": "Слова",
+      "query": "транзистор",
+      "status": 200,
+      "coldMs": 1161,
+      "warmMs": 116,
+      "bytes": 2872014,
+      "main": 5448,
+      "special": 13
+    },
+    {
+      "group": "Слова",
+      "query": "динамик",
+      "status": 200,
+      "coldMs": 995,
+      "warmMs": 10,
+      "bytes": 84252,
+      "main": 151,
+      "special": 0
+    }
+  ]
+}

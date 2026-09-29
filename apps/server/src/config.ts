@@ -12,6 +12,9 @@ const envSchema = z.object({
   // За HTTPS-прокси заказчика IP клиента берётся из X-Forwarded-For (см. PLAN.md §6.8).
   TRUST_PROXY: booleanFromEnv.default(true),
   WEB_DIST_DIR: z.string().optional(),
+  DATA_DIR: z.string().optional(),
+  // Ключ шифрования секретов в БД (пароль DAV). Если потерян — пароль DAV вводится заново.
+  APP_SECRET: z.string().min(16, 'должен быть не короче 16 символов').optional(),
 });
 
 export interface AppConfig {
@@ -21,6 +24,9 @@ export interface AppConfig {
   trustProxy: boolean;
   /** Каталог собранного фронта; если его нет, сервер отдаёт только API. */
   webDistDir: string;
+  /** Каталог данных: SQLite-базы и временные файлы импорта. */
+  dataDir: string;
+  appSecret: string | undefined;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -38,5 +44,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     logLevel: values.LOG_LEVEL,
     trustProxy: values.TRUST_PROXY,
     webDistDir: values.WEB_DIST_DIR ?? path.resolve(import.meta.dirname, '../../web/dist'),
+    dataDir: path.resolve(values.DATA_DIR ?? path.resolve(import.meta.dirname, '../../../data')),
+    appSecret: values.APP_SECRET,
   };
 }

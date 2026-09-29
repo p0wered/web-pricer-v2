@@ -35,10 +35,33 @@ npm run check
 
 `check` запускает проверку форматирования, линтер, проверку типов и тесты.
 
+## Импорт данных
+
+Данные хранятся в каталоге `data/` (в Docker — volume `./data`): служебная база
+`app.sqlite` и каталог позиций `catalog.sqlite`, который целиком заменяется при каждом
+успешном импорте.
+
+```bash
+npm run cli -- import --file /путь/к/Pricer.xlsm
+```
+
+Без `--file` файл скачивается по настройкам импорта (URL, логин, пароль DAV). Пароль DAV
+хранится зашифрованным ключом `APP_SECRET` — его нужно задать в `.env` (см. `.env.example`).
+
+Тест на настоящем файле (в репозиторий файл не входит) запускается так:
+
+```bash
+PRICER_XLSX=/путь/к/Pricer.xlsm npm test
+```
+
 ## Запуск в Docker
 
 ```bash
 docker compose up -d --build
 ```
 
-Приложение будет доступно на `http://localhost:9091`.
+Приложение будет доступно на `http://localhost:9091`. Импорт внутри контейнера:
+
+```bash
+docker compose exec webpricer2 webpricer import
+```

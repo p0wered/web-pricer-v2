@@ -10,5 +10,6 @@ services:
       TZ: Europe/Moscow
       LOG_LEVEL: ${LOG_LEVEL:-info}
       TRUST_PROXY: ${TRUST_PROXY:-true}
+      APP_SECRET: ${APP_SECRET:-}
     volumes:
       - ./data:/app/data

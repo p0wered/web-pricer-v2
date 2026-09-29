@@ -10,10 +10,15 @@
   "dependencies": {
     "@fastify/static": "^10.1.5",
     "@webpricer/shared": "*",
+    "better-sqlite3": "^13.0.3",
     "fastify": "^5.12.5",
+    "yauzl": "^3.4.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@types/node": "^24.19.0"
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^24.19.0",
+    "@types/yauzl": "^3.4.0",
+    "fflate": "^0.8.3"
   }
 }

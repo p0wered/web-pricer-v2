@@ -19,7 +19,8 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test"
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test",
+    "cli": "node --env-file-if-exists=.env apps/server/src/cli.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

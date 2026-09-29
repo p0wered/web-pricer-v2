@@ -15,6 +15,8 @@ const config: AppConfig = {
   logLevel: 'silent',
   trustProxy: true,
   webDistDir,
+  dataDir: path.join(webDistDir, 'data'),
+  appSecret: undefined,
 };
 
 afterAll(() => rmSync(webDistDir, { recursive: true, force: true }));
