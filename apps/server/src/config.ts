@@ -15,6 +15,8 @@ const envSchema = z.object({
   DATA_DIR: z.string().optional(),
   // Ключ шифрования секретов в БД (пароль DAV). Если потерян — пароль DAV вводится заново.
   APP_SECRET: z.string().min(16, 'должен быть не короче 16 символов').optional(),
+  // Сколько последних запросов держать в кэше выдачи (0 — без кэша, для замеров).
+  SEARCH_CACHE_SIZE: z.coerce.number().int().min(0).default(100),
 });
 
 export interface AppConfig {
@@ -27,6 +29,7 @@ export interface AppConfig {
   /** Каталог данных: SQLite-базы и временные файлы импорта. */
   dataDir: string;
   appSecret: string | undefined;
+  searchCacheSize: number;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -46,5 +49,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     webDistDir: values.WEB_DIST_DIR ?? path.resolve(import.meta.dirname, '../../web/dist'),
     dataDir: path.resolve(values.DATA_DIR ?? path.resolve(import.meta.dirname, '../../../data')),
     appSecret: values.APP_SECRET,
+    searchCacheSize: values.SEARCH_CACHE_SIZE,
   };
 }

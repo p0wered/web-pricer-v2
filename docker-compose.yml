@@ -11,5 +11,6 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       TRUST_PROXY: ${TRUST_PROXY:-true}
       APP_SECRET: ${APP_SECRET:-}
+      SEARCH_CACHE_SIZE: ${SEARCH_CACHE_SIZE:-100}
     volumes:
       - ./data:/app/data

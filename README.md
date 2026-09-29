@@ -48,11 +48,18 @@ npm run cli -- import --file /путь/к/Pricer.xlsm
 Без `--file` файл скачивается по настройкам импорта (URL, логин, пароль DAV). Пароль DAV
 хранится зашифрованным ключом `APP_SECRET` — его нужно задать в `.env` (см. `.env.example`).
 
-Тест на настоящем файле (в репозиторий файл не входит) запускается так:
+Тесты на настоящих данных (в репозиторий они не входят): импорт реального файла и
+регрессионный набор качества поиска по загруженному каталогу.
 
 ```bash
-PRICER_XLSX=/путь/к/Pricer.xlsm npm test
+PRICER_XLSX=/путь/к/Pricer.xlsm PRICER_CATALOG=data/catalog.sqlite npm test
 ```
+
+## Поиск
+
+`GET /api/search?q=<запрос>&list=main|special&sort=relevance|price_asc|price_desc&offset=0&limit=200`
+— выдача одной таблицы порцией. Правила поиска описаны в [PLAN.md](PLAN.md) §6.5, замеры
+против старой версии — в [docs/benchmarks.md](docs/benchmarks.md) (скрипты — в `tools/benchmark`).
 
 ## Запуск в Docker
 

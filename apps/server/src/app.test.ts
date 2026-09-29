@@ -17,6 +17,7 @@ const config: AppConfig = {
   webDistDir,
   dataDir: path.join(webDistDir, 'data'),
   appSecret: undefined,
+  searchCacheSize: 0,
 };
 
 afterAll(() => rmSync(webDistDir, { recursive: true, force: true }));

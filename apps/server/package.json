@@ -8,6 +8,7 @@
     "typecheck": "tsc -p ."
   },
   "dependencies": {
+    "@fastify/compress": "^9.2.0",
     "@fastify/static": "^10.1.5",
     "@webpricer/shared": "*",
     "better-sqlite3": "^13.0.3",
