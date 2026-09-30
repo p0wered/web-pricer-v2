@@ -3,6 +3,7 @@ import { isApiError } from '../../api/client.ts';
 import { useChangePassword } from '../../api/queries.ts';
 import { Button } from '../../components/button.tsx';
 import { TextInput } from '../../components/input.tsx';
+import { PasswordInput } from '../../components/password-input.tsx';
 import { Field, Notice } from '../../components/ui.tsx';
 
 const EMPTY = { current: '', password: '', confirmation: '' };
@@ -28,9 +29,8 @@ export function PasswordForm() {
       <input type="text" autoComplete="username" value="webpricer" readOnly hidden />
       <Field label="Текущий пароль" error={fields.current}>
         {({ id, describedBy, invalid }) => (
-          <TextInput
+          <PasswordInput
             id={id}
-            type="password"
             value={form.current}
             onChange={(event) => set('current', event.target.value)}
             autoComplete="current-password"
@@ -40,11 +40,10 @@ export function PasswordForm() {
         )}
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Новый пароль" error={fields.password} hint="Не короче 8 символов">
+        <Field label="Новый пароль" error={fields.password}>
           {({ id, describedBy, invalid }) => (
-            <TextInput
+            <PasswordInput
               id={id}
-              type="password"
               value={form.password}
               onChange={(event) => set('password', event.target.value)}
               autoComplete="new-password"

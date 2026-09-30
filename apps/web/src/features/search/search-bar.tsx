@@ -56,12 +56,6 @@ export function SearchBar({ value, onChange, onSubmit }: SearchBarProps) {
   return (
     <form role="search" onSubmit={submit} className="flex min-w-0 flex-1 items-center gap-2">
       <div className="relative min-w-40 flex-1 lg:max-w-[640px]">
-        <Search
-          aria-hidden
-          size={16}
-          strokeWidth={1.75}
-          className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-subtle"
-        />
         <input
           ref={inputRef}
           type="search"
@@ -74,7 +68,7 @@ export function SearchBar({ value, onChange, onSubmit }: SearchBarProps) {
           autoComplete="off"
           spellCheck={false}
           className={
-            'h-9 w-full border border-transparent rounded-lg bg-sunken pr-9 pl-9 text-sm text-fg transition duration-150 ' +
+            'h-10 w-full border border-transparent rounded-lg bg-sunken px-3 text-sm text-fg transition duration-150 ' +
             'focus:border-accent focus:bg-surface focus:outline-none focus:ring-0 ' +
             '[&::-webkit-search-cancel-button]:hidden'
           }
@@ -94,10 +88,11 @@ export function SearchBar({ value, onChange, onSubmit }: SearchBarProps) {
           </button>
         )}
       </div>
-      <Button type="submit" variant="primary">
+      <Button size="lg" type="submit" variant="primary" icon={Search}>
         Найти
       </Button>
       <Button
+        size="lg"
         pressed={convert}
         onClick={toggleConvert}
         title="Переводить набранное в английской раскладке в русскую"
@@ -106,6 +101,7 @@ export function SearchBar({ value, onChange, onSubmit }: SearchBarProps) {
       </Button>
       <div className="hidden items-center gap-2 sm:flex" role="group" aria-label="Буфер обмена">
         <Button
+          size="lg"
           variant="secondary"
           icon={ClipboardPaste}
           disabled={!clipboard}
@@ -116,6 +112,7 @@ export function SearchBar({ value, onChange, onSubmit }: SearchBarProps) {
           <span className="hidden 2xl:inline">Вставить</span>
         </Button>
         <Button
+          size="lg"
           variant="secondary"
           icon={Copy}
           disabled={!clipboard || !value}
@@ -126,6 +123,7 @@ export function SearchBar({ value, onChange, onSubmit }: SearchBarProps) {
           <span className="hidden 2xl:inline">Копировать</span>
         </Button>
         <Button
+          size="lg"
           variant="secondary"
           icon={Scissors}
           disabled={!clipboard || !value}

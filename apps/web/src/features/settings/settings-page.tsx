@@ -1,4 +1,4 @@
-import { Loader2 } from 'lucide-react';
+import { Loader2, Settings } from 'lucide-react';
 import { type ReactNode, useEffect } from 'react';
 import { useSettings } from '../../api/queries.ts';
 import { AppHeader } from '../../components/app-header.tsx';
@@ -17,8 +17,8 @@ interface BlockProps {
 function Block({ title, description, children }: BlockProps) {
   return (
     <section className={cx(CARD, 'p-5')}>
-      <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-fg">{title}</h2>
-      <p className="mt-1 text-[13px] leading-relaxed text-subtle">{description}</p>
+      <h2 className="text-base font-bold tracking-[-0.01em] text-fg">{title}</h2>
+      <p className="mt-0.5 text-[13px] leading-relaxed text-subtle">{description}</p>
       <div className="mt-5">{children}</div>
     </section>
   );
@@ -34,7 +34,10 @@ export function SettingsPage() {
   return (
     <div className="flex h-full flex-col gap-3 p-3">
       <AppHeader page="settings">
-        <h1 className="text-[15px] font-semibold tracking-[-0.01em] text-fg">Настройки</h1>
+        <h1 className="flex items-center gap-1.5 text-[15px] font-semibold tracking-[-0.01em] text-fg">
+          <Settings aria-hidden size={16} strokeWidth={2} />
+          Настройки
+        </h1>
       </AppHeader>
       <main className="min-h-0 flex-1 overflow-y-auto">
         {/* Раскладка как в старой версии: слева импорт и пароль, справа настройки импорта. */}

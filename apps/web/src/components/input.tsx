@@ -1,9 +1,9 @@
-import { forwardRef, type InputHTMLAttributes, type SelectHTMLAttributes } from 'react';
+import { forwardRef, type InputHTMLAttributes } from 'react';
 import { cx } from './ui.tsx';
 
 // `peer` — для плавающей подписи в Field: она стоит в разметке сразу после поля.
 // Подсказка-placeholder видна только в фокусе, иначе она накладывается на подпись.
-const FIELD_INPUT =
+export const FIELD_INPUT =
   'peer h-12 w-full rounded-lg border border-transparent bg-sunken px-3 pt-4 text-sm text-fg transition duration-150 ' +
   'placeholder:text-transparent focus:placeholder:text-subtle ' +
   'focus:border-accent focus:bg-surface focus:outline-none focus:ring-0 ' +
@@ -22,15 +22,3 @@ export const TextInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLIn
     );
   },
 );
-
-export function SelectInput({
-  className,
-  children,
-  ...props
-}: SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <select className={cx(FIELD_INPUT, 'cursor-pointer pr-8', className)} {...props}>
-      {children}
-    </select>
-  );
-}

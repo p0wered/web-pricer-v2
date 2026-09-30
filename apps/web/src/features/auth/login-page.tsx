@@ -4,7 +4,7 @@ import { isApiError } from '../../api/client.ts';
 import { useLogin, useSession } from '../../api/queries.ts';
 import { ThemeToggle } from '../../components/app-header.tsx';
 import { Button } from '../../components/button.tsx';
-import { TextInput } from '../../components/input.tsx';
+import { PasswordInput } from '../../components/password-input.tsx';
 import { CARD, cx, Field } from '../../components/ui.tsx';
 
 export function LoginPage() {
@@ -52,9 +52,8 @@ export function LoginPage() {
           <input type="text" autoComplete="username" value="webpricer" readOnly hidden />
           <Field label="Пароль" error={error}>
             {({ id, describedBy, invalid }) => (
-              <TextInput
+              <PasswordInput
                 id={id}
-                type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 autoComplete="current-password"

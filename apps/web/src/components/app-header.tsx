@@ -13,13 +13,12 @@ export function ThemeToggle() {
   return (
     <Button
       variant="secondary"
+      size="lg"
+      icon={Icon}
       onClick={toggle}
       aria-label={label}
       title={label}
-      className="w-9 px-0!"
-    >
-      <Icon aria-hidden size={14} strokeWidth={1.75} />
-    </Button>
+    />
   );
 }
 
@@ -29,6 +28,8 @@ function LogoutButton() {
   return (
     <Button
       variant="secondary"
+      size="lg"
+      className="hover:text-danger! hover:bg-danger-soft! hover:border-danger/60"
       icon={LogOut}
       disabled={logout.isPending}
       aria-label="Выйти"
@@ -43,44 +44,50 @@ function LogoutButton() {
 }
 
 interface AppHeaderProps {
-  /** Середина блока: строка поиска на странице поиска, заголовок — на остальных. */
+  /** Строка поиска на странице поиска; заголовок страницы — на остальных (по центру блока). */
   children?: ReactNode;
   page: 'search' | 'settings';
 }
 
-/** Верхний блок приложения: название, содержимое страницы, тема и навигация. */
+/**
+ * Верхний блок приложения. Все элементы строки — высотой h-10, как строка поиска,
+ * поэтому хедер одинаковой высоты на всех страницах.
+ */
 export function AppHeader({ children, page }: AppHeaderProps) {
+  const search = page === 'search';
   return (
     <header
       className={cx(
         CARD,
-        'flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2.5 md:flex-nowrap p-2',
+        'relative flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 p-2 md:flex-nowrap',
       )}
     >
-      <div className="order-last flex w-full min-w-0 items-center gap-2 md:order-none md:w-auto md:flex-1">
-        {children}
-      </div>
-      <nav className="ml-auto flex shrink-0 items-center gap-1 md:ml-0" aria-label="Приложение">
+      {search ? (
+        // Строка поиска на узком экране уходит отдельной строкой под навигацию.
+        <div className="order-last flex min-w-0 basis-full items-center md:order-none md:flex-1 md:basis-auto">
+          {children}
+        </div>
+      ) : (
+        <>
+          <Link to="/search" className={buttonClasses({ size: 'lg' })} title="К поиску">
+            <ArrowLeft aria-hidden size={15} strokeWidth={1.75} />
+            Назад
+          </Link>
+          {/* По центру всего блока, а не промежутка между кнопками — ширина кнопок разная. */}
+          <div className="absolute left-1/2 -translate-x-1/2">{children}</div>
+        </>
+      )}
+      <nav className="ml-auto flex shrink-0 items-center gap-2" aria-label="Приложение">
         <ThemeToggle />
-        {page === 'search' ? (
+        {search && (
           <Link
             to="/settings"
-            className={buttonClasses('secondary')}
+            className={buttonClasses({ size: 'lg' })}
             aria-label="Настройки"
             title="Настройки"
           >
             <Settings aria-hidden size={15} strokeWidth={1.75} />
             <span className="hidden lg:inline">Настройки</span>
-          </Link>
-        ) : (
-          <Link
-            to="/search"
-            className={buttonClasses('secondary')}
-            aria-label="К поиску"
-            title="К поиску"
-          >
-            <ArrowLeft aria-hidden size={15} strokeWidth={1.75} />
-            <span className="hidden lg:inline">К поиску</span>
           </Link>
         )}
         <LogoutButton />

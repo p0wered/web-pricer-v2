@@ -8,9 +8,27 @@ import { type FormEvent, useState } from 'react';
 import { isApiError } from '../../api/client.ts';
 import { useSaveSettings } from '../../api/queries.ts';
 import { Button } from '../../components/button.tsx';
-import { SelectInput, TextInput } from '../../components/input.tsx';
-import { Field, Notice } from '../../components/ui.tsx';
+import { TextInput } from '../../components/input.tsx';
+import { Select, type SelectOption } from '../../components/select.tsx';
+import { TimePicker } from '../../components/time-picker.tsx';
+import { cx, Field, Notice } from '../../components/ui.tsx';
 import { formatDateTime } from '../../lib/format.ts';
+
+const FREQUENCY_OPTIONS: SelectOption<ImportFrequency>[] = [
+  { value: 'daily', label: 'Ежедневно' },
+  { value: 'weekly', label: 'Еженедельно' },
+  { value: 'monthly', label: 'Ежемесячно' },
+];
+
+const WEEKDAY_OPTIONS: SelectOption<string>[] = WEEKDAY_NAMES.map((name, index) => ({
+  value: String(index + 1),
+  label: name,
+}));
+
+const MONTH_DAY_OPTIONS: SelectOption<string>[] = Array.from({ length: 31 }, (_, index) => ({
+  value: String(index + 1),
+  label: String(index + 1),
+}));
 
 interface FormState {
   davUrl: string;
@@ -124,51 +142,48 @@ export function ImportSettingsForm({ data }: { data: SettingsResponse }) {
         </Field>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      {/* Ежедневно дня нет — два оставшихся поля делят строку пополам. */}
+      <div
+        className={cx(
+          'grid gap-4',
+          form.frequency === 'daily' ? 'sm:grid-cols-2' : 'sm:grid-cols-3',
+        )}
+      >
         <Field label="Частота" error={fields.frequency}>
           {({ id, describedBy }) => (
-            <SelectInput
+            <Select
               id={id}
               value={form.frequency}
-              onChange={(event) => set('frequency', event.target.value as ImportFrequency)}
+              options={FREQUENCY_OPTIONS}
+              onChange={(value) => set('frequency', value)}
               aria-describedby={describedBy}
-            >
-              <option value="daily">Ежедневно</option>
-              <option value="weekly">Еженедельно</option>
-              <option value="monthly">Ежемесячно</option>
-            </SelectInput>
+            />
           )}
         </Field>
 
         {form.frequency === 'weekly' && (
           <Field label="День недели" error={fields.day}>
             {({ id, describedBy, invalid }) => (
-              <SelectInput
+              <Select
                 id={id}
                 value={form.weekday}
-                onChange={(event) => set('weekday', event.target.value)}
+                options={WEEKDAY_OPTIONS}
+                onChange={(value) => set('weekday', value)}
                 aria-describedby={describedBy}
                 aria-invalid={invalid}
-              >
-                {WEEKDAY_NAMES.map((name, index) => (
-                  <option key={name} value={index + 1}>
-                    {name}
-                  </option>
-                ))}
-              </SelectInput>
+              />
             )}
           </Field>
         )}
         {form.frequency === 'monthly' && (
-          <Field label="Число месяца" error={fields.day} hint="В коротком месяце — последний день">
+          <Field label="Число месяца" error={fields.day}>
             {({ id, describedBy, invalid }) => (
-              <TextInput
+              <Select
                 id={id}
-                type="number"
-                min={1}
-                max={31}
                 value={form.monthDay}
-                onChange={(event) => set('monthDay', event.target.value)}
+                options={MONTH_DAY_OPTIONS}
+                columns={7}
+                onChange={(value) => set('monthDay', value)}
                 aria-describedby={describedBy}
                 aria-invalid={invalid}
                 className="tabular"
@@ -179,14 +194,12 @@ export function ImportSettingsForm({ data }: { data: SettingsResponse }) {
 
         <Field label="Время запуска (по МСК)" error={fields.time}>
           {({ id, describedBy, invalid }) => (
-            <TextInput
+            <TimePicker
               id={id}
-              type="time"
               value={form.time}
-              onChange={(event) => set('time', event.target.value)}
+              onChange={(value) => set('time', value)}
               aria-describedby={describedBy}
               aria-invalid={invalid}
-              className="tabular"
             />
           )}
         </Field>
