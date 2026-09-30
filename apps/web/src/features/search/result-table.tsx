@@ -6,6 +6,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { type CSSProperties, type ReactNode, useEffect, useMemo, useRef } from 'react';
 import { Button } from '../../components/button.tsx';
 import { cx } from '../../components/ui.tsx';
+import { supplierColor } from '../../lib/format.ts';
 
 export interface Column {
   id: string;
@@ -100,19 +101,25 @@ export function ResultTable({
         query.isPlaceholderData && 'opacity-60 transition-opacity',
       )}
     >
+      {/* Шапка — скруглённая серая плашка; подложка цвета карточки прячет строки под ней. */}
       <div
         role="rowgroup"
-        className="sticky top-0 z-10 bg-sunken"
+        className="sticky top-0 z-10 bg-surface mb-1"
         style={{ minWidth: grid.minWidth }}
       >
-        <div role="row" aria-rowindex={1} className="grid h-8 items-center" style={grid}>
+        <div
+          role="row"
+          aria-rowindex={1}
+          className="grid h-8 items-center rounded-lg bg-sunken"
+          style={grid}
+        >
           {columns.map((column) => (
             <div
               key={column.id}
               role="columnheader"
               aria-sort={column.sort}
               className={cx(
-                'truncate px-2.5 text-[12px] font-medium text-subtle',
+                'truncate px-2.5 text-[13px] text-subtle',
                 column.align === 'end' && 'text-right',
               )}
             >
@@ -141,15 +148,22 @@ export function ResultTable({
                 role="row"
                 aria-rowindex={row.index + 2}
                 className={cx(
-                  'absolute inset-x-0 top-0 grid items-center text-[13px]',
+                  'absolute inset-x-0 top-0 grid items-center rounded-lg text-[13px]',
                   // Линия между строками с отступами по краям — не упирается в рамку блока.
                   row.index < items.length - 1 &&
                     'after:absolute after:inset-x-2.5 after:bottom-0 after:h-px',
                   item.isStop
                     ? 'bg-stop-bg text-stop-fg after:bg-stop-fg/10 hover:bg-stop-bg-hover'
-                    : 'text-fg after:bg-line hover:bg-row-hover',
+                    : 'supplier-row text-fg after:bg-line',
                 )}
-                style={{ ...grid, height: ROW_HEIGHT, transform: `translateY(${row.start}px)` }}
+                style={
+                  {
+                    ...grid,
+                    height: ROW_HEIGHT,
+                    transform: `translateY(${row.start}px)`,
+                    '--row-tint': supplierColor(item.supplier),
+                  } as CSSProperties
+                }
               >
                 {columns.map((column) => (
                   <div

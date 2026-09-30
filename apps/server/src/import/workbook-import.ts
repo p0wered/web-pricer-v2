@@ -13,12 +13,18 @@ const SPECIAL_PREFIX = '>';
 const HEADER_ROWS = 2;
 const COLUMNS = 5;
 
+const PROGRESS_INTERVAL_MS = 250;
+
 export interface WorkbookProgress {
+  /** Лист, который сейчас разбирается, с единицы. */
   sheetIndex: number;
   sheetCount: number;
   sheetName: string;
   rowsMain: number;
   rowsSpecial: number;
+  /** Прочитано XML листов без сжатия — доля разбора считается по байтам, а не по листам. */
+  bytesDone: number;
+  bytesTotal: number;
 }
 
 export interface WorkbookStats {
@@ -70,6 +76,11 @@ export async function importWorkbook(
 ): Promise<WorkbookStats> {
   const stats: WorkbookStats = { sheets: 0, rowsMain: 0, rowsSpecial: 0 };
   const sheets = reader.sheets.filter((sheet) => !isIgnoredSheet(sheet.name));
+  // Листы очень разные по размеру (в рабочей книге один лист — четверть всего XML),
+  // поэтому ход считается по прочитанным байтам и сообщается и посреди листа.
+  const bytesTotal = sheets.reduce((sum, sheet) => sum + sheet.size, 0);
+  let bytesBefore = 0;
+  let reportedAt = 0;
 
   for (const [position, sheet] of sheets.entries()) {
     // Лист регистрируется по строке 1 (A1 — заголовок), а если её в файле нет — по первой
@@ -82,7 +93,24 @@ export async function importWorkbook(
     };
     let count = 0;
 
-    for await (const row of reader.rows(sheet, COLUMNS)) {
+    const report = (sheetBytes: number) => {
+      reportedAt = Date.now();
+      const special = record.current?.kind === 'special';
+      onProgress?.({
+        sheetIndex: position + 1,
+        sheetCount: sheets.length,
+        sheetName: sheet.name,
+        rowsMain: stats.rowsMain + (special ? 0 : count),
+        rowsSpecial: stats.rowsSpecial + (special ? count : 0),
+        bytesDone: bytesBefore + sheetBytes,
+        bytesTotal,
+      });
+    };
+    const onBytes = (sheetBytes: number) => {
+      if (Date.now() - reportedAt >= PROGRESS_INTERVAL_MS) report(sheetBytes);
+    };
+
+    for await (const row of reader.rows(sheet, COLUMNS, onProgress && onBytes)) {
       if (row.rowNumber <= HEADER_ROWS) {
         if (row.rowNumber === 1 && !record.current) register(cellText(row.cells[0], false));
         continue;
@@ -99,13 +127,9 @@ export async function importWorkbook(
     if (registered.kind === 'special') stats.rowsSpecial += count;
     else stats.rowsMain += count;
 
-    onProgress?.({
-      sheetIndex: position + 1,
-      sheetCount: sheets.length,
-      sheetName: sheet.name,
-      rowsMain: stats.rowsMain,
-      rowsSpecial: stats.rowsSpecial,
-    });
+    bytesBefore += sheet.size;
+    count = 0;
+    report(0);
   }
   return stats;
 }

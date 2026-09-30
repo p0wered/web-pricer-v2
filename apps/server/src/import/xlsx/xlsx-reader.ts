@@ -18,6 +18,8 @@ export interface SheetInfo {
   path: string;
   /** Позиция листа в книге, с нуля. */
   index: number;
+  /** Размер XML листа без сжатия, байт — для доли разбора в прогрессе. */
+  size: number;
 }
 
 export interface XlsxRow {
@@ -116,8 +118,15 @@ export class XlsxReader {
     this.zip.close();
   }
 
-  /** Строки листа по порядку. Ячейки правее `maxColumns` отбрасываются. */
-  async *rows(sheet: SheetInfo, maxColumns: number): AsyncGenerator<XlsxRow> {
+  /**
+   * Строки листа по порядку. Ячейки правее `maxColumns` отбрасываются.
+   * `onBytes` получает, сколько байт XML листа уже прочитано (без сжатия).
+   */
+  async *rows(
+    sheet: SheetInfo,
+    maxColumns: number,
+    onBytes?: (bytes: number) => void,
+  ): AsyncGenerator<XlsxRow> {
     const stream = await this.openText(sheet.path);
     const sharedStrings = this.sharedStrings;
     const dateStyles = this.dateStyles;
@@ -217,9 +226,12 @@ export class XlsxReader {
 
     // Готовые строки отдаются после каждого чанка: следующий чанк не читается, пока
     // потребитель не обработал предыдущие строки (естественное противодавление).
+    let bytes = 0;
     try {
       for await (const chunk of stream) {
         scanner.write(chunk as string);
+        bytes += Buffer.byteLength(chunk as string);
+        onBytes?.(bytes);
         if (ready.length > 0) yield* ready.splice(0, ready.length);
       }
       scanner.end();
@@ -254,6 +266,7 @@ export class XlsxReader {
     });
 
     const sheets = this.sheets;
+    const entries = this.entries;
     await scanXml(await this.openText('xl/workbook.xml'), {
       onOpen(name, attrs) {
         if (name !== 'sheet') return;
@@ -262,7 +275,8 @@ export class XlsxReader {
         if (sheetName === undefined || !path) {
           throw new XlsxFormatError('Не удалось сопоставить лист с его файлом');
         }
-        sheets.push({ name: sheetName, path, index: sheets.length });
+        const size = entries.get(path)?.uncompressedSize ?? 0;
+        sheets.push({ name: sheetName, path, index: sheets.length, size });
       },
     });
     if (sheets.length === 0) throw new XlsxFormatError('В книге нет листов');

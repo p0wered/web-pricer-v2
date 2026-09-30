@@ -1,5 +1,6 @@
 import type { SearchSort } from '@webpricer/shared';
 import { useQueryClient } from '@tanstack/react-query';
+import { Ban, Package } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useSearchList } from '../../api/queries.ts';
@@ -49,13 +50,19 @@ export function SearchPage() {
 
   return (
     <div className="flex h-full flex-col gap-3 p-3">
-      <AppHeader page="search">
+      <AppHeader>
         <SearchBar value={draft} onChange={setDraft} onSubmit={submit} />
       </AppHeader>
       <main className="flex min-h-0 flex-1 flex-col">
         <SplitPanes
           left={
-            <ResultPanel title="Стоп-лист" query={special} active={active}>
+            <ResultPanel
+              title="Стоп-лист"
+              icon={Ban}
+              iconClassName="text-stop-fg"
+              query={special}
+              active={active}
+            >
               <ResultTable
                 label="Стоп-лист"
                 columns={stopColumns}
@@ -68,7 +75,13 @@ export function SearchPage() {
             </ResultPanel>
           }
           right={
-            <ResultPanel title="Детали" query={main} active={active}>
+            <ResultPanel
+              title="Детали"
+              icon={Package}
+              iconClassName="text-accent"
+              query={main}
+              active={active}
+            >
               <ResultTable
                 label="Детали"
                 columns={mainColumns}

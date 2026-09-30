@@ -30,7 +30,7 @@ const name: Column = {
 const quantity: Column = {
   id: 'quantity',
   header: 'Кол-во',
-  min: 62,
+  min: 70,
   grow: 0.6,
   align: 'end',
   cell: (item) => item.quantity,
@@ -54,7 +54,7 @@ export const stopColumns: Column[] = [
   {
     id: 'year',
     header: 'Год / инфо',
-    min: 84,
+    min: 94,
     grow: 0.9,
     cell: (item) => item.year,
     title: (item) => item.year,

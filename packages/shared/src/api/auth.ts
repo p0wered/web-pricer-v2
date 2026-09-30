@@ -12,10 +12,7 @@ export const changePasswordRequestSchema = z
     current: z.string().min(1, 'Данное поле обязательно для заполнения'),
     password: z
       .string()
-      .min(
-        PASSWORD_MIN_LENGTH,
-        `Минимальное количестве символов - ${PASSWORD_MIN_LENGTH}`,
-      )
+      .min(PASSWORD_MIN_LENGTH, `Минимальное количество символов - ${PASSWORD_MIN_LENGTH}`)
       .max(200),
     confirmation: z.string(),
   })

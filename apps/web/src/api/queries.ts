@@ -1,5 +1,6 @@
 // Запросы к API через TanStack Query: кэш, повторы, отмена устаревших запросов.
 import {
+  currentImportResponseSchema,
   importRunSchema,
   SEARCH_PAGE_SIZE,
   type SearchList,
@@ -135,12 +136,23 @@ export function useStartImport() {
   });
 }
 
-/** Статус запуска импорта; опрашивается, пока импорт идёт. */
+/** Статус запуска импорта; опрашивается, пока импорт идёт (дважды в секунду — для полосы прогресса). */
 export function useImportRun(runId: number | null) {
   return useQuery({
     queryKey: ['import-run', runId],
     queryFn: ({ signal }) => apiRequest(`/import/${runId}`, { signal, schema: importRunSchema }),
     enabled: runId !== null,
-    refetchInterval: (query) => (query.state.data?.status === 'running' ? 1000 : false),
+    refetchInterval: (query) => (query.state.data?.status === 'running' ? 500 : false),
+  });
+}
+
+/** Идущий сейчас импорт — при открытии настроек, чтобы сразу показать его ход. */
+export function useCurrentImport() {
+  return useQuery({
+    queryKey: ['import-current'],
+    queryFn: ({ signal }) =>
+      apiRequest('/import/current', { signal, schema: currentImportResponseSchema }),
+    staleTime: 0,
+    refetchOnWindowFocus: false,
   });
 }

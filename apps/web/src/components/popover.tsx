@@ -28,12 +28,24 @@ export function usePopover(
   return { open, placement, show, hide: () => setOpen(false) };
 }
 
-/** Классы панели: карточка над содержимым, появляется от края поля. */
+/** Карточка выпадающей панели над содержимым и её появление; положение задаёт вызывающий. */
+export function popoverSurface(open: boolean): string {
+  return cx(
+    'absolute z-30 rounded-xl bg-surface p-1.5 shadow-popover dark:ring-1 dark:ring-line',
+    'duration-150 ease-out motion-reduce:transition-none',
+    // Видимой панель становится сразу (в первом кадре перехода она ещё hidden, и в неё
+    // нельзя перевести фокус), а скрывается — после того, как погаснет.
+    open
+      ? 'visible scale-100 opacity-100 transition-[opacity,scale]'
+      : 'invisible scale-[0.97] opacity-0 transition-[opacity,scale,visibility]',
+  );
+}
+
+/** Классы панели у поля формы: появляется от края поля. */
 export function popoverClasses(open: boolean, placement: Placement, className?: string): string {
   return cx(
-    'absolute left-0 z-30 min-w-full rounded-xl bg-surface p-1 shadow-popover dark:ring-1 dark:ring-line',
-    'transition-[opacity,scale,visibility] duration-150 ease-out motion-reduce:transition-none',
-    open ? 'visible scale-100 opacity-100' : 'invisible scale-[0.97] opacity-0',
+    popoverSurface(open),
+    'left-0 min-w-full',
     placement === 'top' ? 'bottom-full mb-1.5 origin-bottom' : 'top-full mt-1.5 origin-top',
     className,
   );

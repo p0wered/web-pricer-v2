@@ -3,7 +3,7 @@
 // Блокировка берётся сразу в запросе — API отвечает номером запуска, а сам импорт идёт в
 // отдельном потоке; фронт опрашивает статус запуска (как индикатор «Импорт выполняется…» в
 // старой версии, но без HTTP-запроса длиной в несколько минут).
-import type { ImportRun } from '@webpricer/shared';
+import type { ImportProgress, ImportRun } from '@webpricer/shared';
 import type { AppDatabase } from '../db/app-db.ts';
 import type { CatalogStore } from '../search/catalog-store.ts';
 import { ImportError } from './import-errors.ts';
@@ -19,6 +19,7 @@ import { runImportInWorker, type WorkerInput } from './run-import-in-worker.ts';
 export type ImportRunner = (
   input: Omit<WorkerInput, 'options'>,
   options: ImportOptions,
+  onProgress?: (progress: ImportProgress) => void,
 ) => Promise<ImportResult>;
 
 export interface ImportServiceDeps {
@@ -47,6 +48,8 @@ interface RunRow {
 export class ImportService {
   private readonly deps: ImportServiceDeps;
   private active: Promise<void> | null = null;
+  /** Последний ход импорта, запущенного этим процессом; в базу не пишется — нужен, пока идёт. */
+  private progress: { runId: number; progress: ImportProgress } | null = null;
 
   constructor(deps: ImportServiceDeps) {
     this.deps = deps;
@@ -58,7 +61,10 @@ export class ImportService {
     const runId = acquireImportRun(appDb, trigger, STALE_RUN_AFTER_MS);
     const runner = this.deps.runner ?? runImportInWorker;
 
-    this.active = runner({ dataDir, appSecret }, { trigger, runId })
+    this.progress = null;
+    this.active = runner({ dataDir, appSecret }, { trigger, runId }, (progress) => {
+      this.progress = { runId, progress };
+    })
       .then(async (result) => {
         await catalog.reload();
         this.deps.onFinished?.(runId, result);
@@ -74,6 +80,7 @@ export class ImportService {
       })
       .finally(() => {
         this.active = null;
+        this.progress = null;
       });
     return runId;
   }
@@ -111,11 +118,19 @@ export class ImportService {
       )
       .get(id) as RunRow | undefined;
     if (!row) return null;
+    // Этап в базе меняется раньше, чем приходит ход нового этапа, — старый ход не показываем.
+    const progress =
+      row.status === 'running' &&
+      this.progress?.runId === row.id &&
+      this.progress.progress.stage === row.stage
+        ? this.progress.progress
+        : null;
     return {
       id: row.id,
       trigger: row.trigger,
       status: row.status,
       stage: row.stage,
+      progress,
       startedAt: row.started_at,
       finishedAt: row.finished_at,
       rowsMain: row.rows_main,

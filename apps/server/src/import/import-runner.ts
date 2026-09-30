@@ -5,6 +5,7 @@
 // - одновременно идёт только один импорт — и между процессами (сервер, CLI), т. к.
 //   блокировка хранится в БД; «зависшая» блокировка упавшего процесса снимается по heartbeat;
 // - пока идёт импорт, рабочий каталог не трогается; при любой ошибке он остаётся прежним.
+import type { ImportProgress } from '@webpricer/shared';
 import { readdirSync, renameSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import type { AppDatabase } from '../db/app-db.ts';
@@ -44,17 +45,7 @@ export interface ImportDeps {
   staleAfterMs?: number;
 }
 
-export type ImportProgress =
-  | { stage: 'download'; bytes: number; totalBytes: number | null }
-  | {
-      stage: 'parse';
-      sheetIndex: number;
-      sheetCount: number;
-      sheetName: string;
-      rowsMain: number;
-      rowsSpecial: number;
-    }
-  | { stage: 'finalize' };
+export type { ImportProgress };
 
 export interface ImportResult extends WorkbookStats {
   runId: number;

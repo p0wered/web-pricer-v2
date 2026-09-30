@@ -3,7 +3,7 @@ import { type ReactNode, useId } from 'react';
 const cx = (...classes: (string | false | null | undefined)[]) => classes.filter(Boolean).join(' ');
 
 /** Блок интерфейса («бенто»): поиск, таблицы, разделы настроек — на сером фоне страницы. */
-export const CARD = 'rounded-2xl bg-surface shadow-card';
+export const CARD = 'rounded-2xl bg-surface border border-line';
 
 interface FieldProps {
   label: string;
@@ -35,7 +35,7 @@ export function Field({ label, error, hint, children }: FieldProps) {
         </label>
       </div>
       {note && (
-        <p id={noteId} className={cx('px-3 text-[13px]', error ? 'text-danger' : 'text-subtle')}>
+        <p id={noteId} className={cx('px-1 text-[13px]', error ? 'text-danger' : 'text-subtle')}>
           {note}
         </p>
       )}

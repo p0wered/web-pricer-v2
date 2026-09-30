@@ -19,9 +19,11 @@ function apply(theme: Theme): void {
   const root = document.documentElement;
   if (root.classList.contains('dark') === (theme === 'dark')) return;
   // На время смены темы переходы выключены: иначе кнопки и поля плавно «догоняют» новую
-  // палитру, а в неактивной вкладке и вовсе застревают в старых цветах.
+  // палитру, а в неактивной вкладке и вовсе застревают в старых цветах. Кроме элементов
+  // с data-theme-animate: сам переключатель темы должен анимироваться.
   const freeze = document.createElement('style');
-  freeze.textContent = '*,*::before,*::after{transition:none!important}';
+  freeze.textContent =
+    '*:not([data-theme-animate]),*::before,*::after{transition:none!important}';
   document.head.append(freeze);
   root.classList.toggle('dark', theme === 'dark');
   void root.offsetHeight; // применить стили до того, как вернуть переходы

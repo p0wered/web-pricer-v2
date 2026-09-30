@@ -41,12 +41,12 @@ export function LoginPage() {
       <main className="flex flex-1 items-start justify-center px-4 pt-[16vh]">
         <form
           onSubmit={submit}
-          className={cx(CARD, 'flex w-full max-w-[380px] flex-col gap-6 p-7')}
+          className={cx(CARD, 'flex w-full max-w-[380px] flex-col gap-6 p-5')}
           noValidate
         >
-          <div className="flex flex-col gap-1.5">
-            <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-fg">Вход</h1>
-            <p className="text-[13px] text-subtle">Поиск по прайсам поставщиков радиодеталей</p>
+          <div className="flex flex-col items-center justify-center text-center">
+            <h1 className="text-[22px] font-bold tracking-[-0.02em] text-fg">WebPricer</h1>
+            <p className="text-[13px] text-subtle">Авторизация</p>
           </div>
           {/* Имя пользователя одно на всех: скрытое поле нужно менеджерам паролей. */}
           <input type="text" autoComplete="username" value="webpricer" readOnly hidden />
@@ -63,7 +63,7 @@ export function LoginPage() {
               />
             )}
           </Field>
-          <Button type="submit" variant="primary" disabled={login.isPending || !password}>
+          <Button type="submit" variant="primary" className="h-10" disabled={login.isPending || !password}>
             {login.isPending ? 'Вход…' : 'Войти'}
           </Button>
         </form>

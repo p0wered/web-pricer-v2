@@ -1,28 +1,14 @@
-import { Loader2, Settings } from 'lucide-react';
-import { type ReactNode, useEffect } from 'react';
+import { ChevronLeft, Loader2 } from 'lucide-react';
+import { useEffect } from 'react';
+import { Link } from 'react-router';
 import { useSettings } from '../../api/queries.ts';
-import { AppHeader } from '../../components/app-header.tsx';
-import { CARD, cx, Notice } from '../../components/ui.tsx';
+import { AppMenu } from '../../components/app-header.tsx';
+import { buttonClasses } from '../../components/button.tsx';
+import { Notice } from '../../components/ui.tsx';
 import { ImportPanel } from './import-panel.tsx';
 import { ImportSettingsForm } from './import-settings-form.tsx';
 import { PasswordForm } from './password-form.tsx';
-
-interface BlockProps {
-  title: string;
-  description: ReactNode;
-  children: ReactNode;
-}
-
-/** Блок настроек: заголовок, пояснение, содержимое. */
-function Block({ title, description, children }: BlockProps) {
-  return (
-    <section className={cx(CARD, 'p-5')}>
-      <h2 className="text-base font-bold tracking-[-0.01em] text-fg">{title}</h2>
-      <p className="mt-0.5 text-[13px] leading-relaxed text-subtle">{description}</p>
-      <div className="mt-5">{children}</div>
-    </section>
-  );
-}
+import { Section } from './section.tsx';
 
 export function SettingsPage() {
   const settings = useSettings();
@@ -32,45 +18,38 @@ export function SettingsPage() {
   }, []);
 
   return (
-    <div className="flex h-full flex-col gap-3 p-3">
-      <AppHeader page="settings">
-        <h1 className="flex items-center gap-1.5 text-[15px] font-semibold tracking-[-0.01em] text-fg">
-          <Settings aria-hidden size={16} strokeWidth={2} />
-          Настройки
-        </h1>
-      </AppHeader>
-      <main className="min-h-0 flex-1 overflow-y-auto">
-        {/* Раскладка как в старой версии: слева импорт и пароль, справа настройки импорта. */}
-        <div className="grid items-start gap-3 lg:grid-cols-2">
-          <div className="grid gap-3">
-            <Block
-              title="Импорт данных"
-              description="Скачать файл по настройкам импорта и обновить данные сейчас. Во время импорта поиск работает по прежним данным."
+    <div className="h-full overflow-y-auto">
+      {/* Одна колонка: разделы идут сверху вниз в порядке смысла — импорт, потом пароль. */}
+      <div className="mx-auto flex w-full max-w-[680px] flex-col gap-8 px-4 pt-3 pb-12">
+        <div className="flex flex-col gap-4">
+          {/* Меню позиционируется от этой строки — под её правым краем. */}
+          <nav className="relative flex items-center justify-between" aria-label="Приложение">
+            <Link
+              to="/search"
+              className={buttonClasses({ variant: 'ghost', size: 'lg', className: '-ml-3' })}
             >
-              <ImportPanel />
-            </Block>
-            <Block
-              title="Пароль для входа"
-              description="Один пароль для всех сотрудников. После смены остальные сеансы завершатся."
-            >
-              <PasswordForm />
-            </Block>
-          </div>
-
-          <Block
-            title="Настройки импорта"
-            description="Откуда скачивать файл и когда обновлять данные автоматически."
-          >
-            {settings.isPending && (
-              <p className="flex items-center gap-2 text-[13px] text-subtle">
-                <Loader2 aria-hidden size={15} className="animate-spin" /> Загрузка…
-              </p>
-            )}
-            {settings.isError && <Notice tone="error">{settings.error.message}</Notice>}
-            {settings.data && <ImportSettingsForm data={settings.data} />}
-          </Block>
+              <ChevronLeft aria-hidden size={16} strokeWidth={1.75} />
+              Поиск
+            </Link>
+            <AppMenu settings={false} />
+          </nav>
+          <h1 className="px-1 text-[26px] font-bold tracking-[-0.02em] text-fg">Настройки</h1>
         </div>
-      </main>
+
+        <Section title="Импорт данных">
+          <ImportPanel nextRunAt={settings.data?.nextRunAt ?? null} />
+        </Section>
+
+        {settings.isPending && (
+          <p className="flex items-center gap-2 px-1 text-[13px] text-subtle">
+            <Loader2 aria-hidden size={15} className="animate-spin" /> Загрузка настроек…
+          </p>
+        )}
+        {settings.isError && <Notice tone="error">{settings.error.message}</Notice>}
+        {settings.data && <ImportSettingsForm data={settings.data} />}
+
+        <PasswordForm />
+      </div>
     </div>
   );
 }

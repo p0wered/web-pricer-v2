@@ -88,13 +88,14 @@ export function SearchBar({ value, onChange, onSubmit }: SearchBarProps) {
           </button>
         )}
       </div>
-      <Button size="lg" type="submit" variant="primary" icon={Search}>
+      <Button size="lg" type="submit" variant="primary" className="px-3" icon={Search}>
         Найти
       </Button>
       <Button
         size="lg"
         pressed={convert}
         onClick={toggleConvert}
+        className="text-xs text-fg"
         title="Переводить набранное в английской раскладке в русскую"
       >
         EN→RU

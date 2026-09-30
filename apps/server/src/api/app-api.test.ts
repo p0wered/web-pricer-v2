@@ -273,7 +273,7 @@ describe('смена пароля', () => {
       (await change({ current: PASSWORD, password: 'новый-пароль', confirmation: 'другой' })).json()
         .fields,
     ).toEqual({
-      password: 'Поле Пароль не совпадает с подтверждением.',
+      password: 'Поле Пароль не совпадает с подтверждением',
     });
     expect(
       (await change({ current: PASSWORD, password: 'short', confirmation: 'short' })).statusCode,

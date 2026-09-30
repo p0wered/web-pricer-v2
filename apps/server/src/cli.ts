@@ -38,8 +38,12 @@ function describeProgress(progress: ImportProgress): string {
         : '';
       return `Скачивание: ${mb}${total} МБ`;
     }
-    case 'parse':
-      return `Разбор листов: ${progress.sheetIndex}/${progress.sheetCount}, строк: ${numberFormat.format(progress.rowsMain + progress.rowsSpecial)}`;
+    case 'parse': {
+      const percent = progress.bytesTotal
+        ? Math.min(100, Math.floor((progress.bytesDone / progress.bytesTotal) * 100))
+        : 0;
+      return `Разбор листов: ${percent}%, лист ${progress.sheetIndex}/${progress.sheetCount}, строк: ${numberFormat.format(progress.rowsMain + progress.rowsSpecial)}`;
+    }
     case 'finalize':
       return 'Завершение…';
   }

@@ -76,7 +76,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       )}
       {...props}
     >
-      {Icon && <Icon aria-hidden size={15} strokeWidth={1.9} />}
+      {Icon && <Icon aria-hidden size={15} strokeWidth={1.75} />}
       {children}
     </button>
   );
