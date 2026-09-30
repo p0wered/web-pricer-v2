@@ -102,15 +102,10 @@ export function ResultTable({
     >
       <div
         role="rowgroup"
-        className="sticky top-0 z-10 bg-surface"
+        className="sticky top-0 z-10 bg-sunken"
         style={{ minWidth: grid.minWidth }}
       >
-        <div
-          role="row"
-          aria-rowindex={1}
-          className="grid h-8 items-center border-b border-line"
-          style={grid}
-        >
+        <div role="row" aria-rowindex={1} className="grid h-8 items-center" style={grid}>
           {columns.map((column) => (
             <div
               key={column.id}
@@ -146,10 +141,13 @@ export function ResultTable({
                 role="row"
                 aria-rowindex={row.index + 2}
                 className={cx(
-                  'absolute inset-x-0 top-0 grid items-center border-b border-line/70 text-[13px]',
+                  'absolute inset-x-0 top-0 grid items-center text-[13px]',
+                  // Линия между строками с отступами по краям — не упирается в рамку блока.
+                  row.index < items.length - 1 &&
+                    'after:absolute after:inset-x-2.5 after:bottom-0 after:h-px',
                   item.isStop
-                    ? 'bg-stop-bg text-stop-fg hover:bg-stop-bg-hover'
-                    : 'text-fg hover:bg-row-hover',
+                    ? 'bg-stop-bg text-stop-fg after:bg-stop-fg/10 hover:bg-stop-bg-hover'
+                    : 'text-fg after:bg-line hover:bg-row-hover',
                 )}
                 style={{ ...grid, height: ROW_HEIGHT, transform: `translateY(${row.start}px)` }}
               >

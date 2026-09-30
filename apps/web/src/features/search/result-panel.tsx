@@ -11,35 +11,38 @@ interface ResultPanelProps {
   children: ReactNode;
 }
 
-/** Блок таблицы: заголовок со счётчиком, полоса загрузки, сама таблица. */
+/**
+ * Блок таблицы: заголовок со счётчиком и таблица во вложенной рамке — с отступом от краёв
+ * карточки, как поле поиска в хедере. Полоса загрузки идёт по нижнему краю заголовка.
+ */
 export function ResultPanel({ title, query, active, children }: ResultPanelProps) {
   const total = query.data?.pages[0]?.total;
   const loading = active && query.isFetching && !query.isFetchingNextPage;
   return (
-    <section
-      aria-label={title}
-      className={cx(CARD, 'flex h-full min-h-0 min-w-0 flex-col overflow-hidden')}
-    >
-      <div className="relative flex h-12 shrink-0 items-center gap-2 border-b border-line px-4">
-        <h2 className="text-base font-bold tracking-[-0.01em] text-fg">{title}</h2>
-        {active && total !== undefined && (
-          <span
-            className={cx(
-              'tabular rounded-full bg-sunken px-2 py-px text-[12px] font-medium text-muted',
-              query.isPlaceholderData && 'opacity-50',
-            )}
-          >
-            {formatCount(total)}
-          </span>
-        )}
-        {loading && (
-          <div
-            aria-hidden
-            className="progress-bar absolute inset-x-0 -bottom-px h-0.5 overflow-hidden"
-          />
-        )}
+    <section aria-label={title} className={cx(CARD, 'flex h-full min-h-0 min-w-0 flex-col p-2')}>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-line">
+        {/* Отступ как у ячеек: заголовок стоит в одну линию с колонками. */}
+        <div className="relative flex h-11 shrink-0 items-center gap-2 px-2.5">
+          <h2 className="text-base font-bold tracking-[-0.01em] text-fg">{title}</h2>
+          {active && total !== undefined && (
+            <span
+              className={cx(
+                'tabular rounded-full bg-sunken px-2 py-px text-[12px] font-medium text-muted',
+                query.isPlaceholderData && 'opacity-50',
+              )}
+            >
+              {formatCount(total)}
+            </span>
+          )}
+          {loading && (
+            <div
+              aria-hidden
+              className="progress-bar absolute inset-x-0 -bottom-px h-0.5 overflow-hidden"
+            />
+          )}
+        </div>
+        {children}
       </div>
-      {children}
     </section>
   );
 }
