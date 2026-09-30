@@ -2,8 +2,10 @@ import { type FormEvent, useEffect, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router';
 import { isApiError } from '../../api/client.ts';
 import { useLogin, useSession } from '../../api/queries.ts';
-import { ThemeToggle, Wordmark } from '../../components/app-header.tsx';
-import { Button, CARD, cx, Field, TextInput } from '../../components/ui.tsx';
+import { ThemeToggle } from '../../components/app-header.tsx';
+import { Button } from '../../components/button.tsx';
+import { TextInput } from '../../components/input.tsx';
+import { CARD, cx, Field } from '../../components/ui.tsx';
 
 export function LoginPage() {
   const session = useSession();
@@ -43,7 +45,6 @@ export function LoginPage() {
           noValidate
         >
           <div className="flex flex-col gap-1.5">
-            <Wordmark />
             <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-fg">Вход</h1>
             <p className="text-[13px] text-subtle">Поиск по прайсам поставщиков радиодеталей</p>
           </div>

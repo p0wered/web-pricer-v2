@@ -7,7 +7,9 @@ import {
 import { type FormEvent, useState } from 'react';
 import { isApiError } from '../../api/client.ts';
 import { useSaveSettings } from '../../api/queries.ts';
-import { Button, Field, Notice, SelectInput, TextInput } from '../../components/ui.tsx';
+import { Button } from '../../components/button.tsx';
+import { SelectInput, TextInput } from '../../components/input.tsx';
+import { Field, Notice } from '../../components/ui.tsx';
 import { formatDateTime } from '../../lib/format.ts';
 
 interface FormState {
@@ -24,7 +26,7 @@ function initialState(settings: ImportSettings | null): FormState {
   return {
     davUrl: settings?.davUrl ?? '',
     davUsername: settings?.davUsername ?? '',
-    davPassword: '',
+    davPassword: settings?.davPassword ?? '',
     frequency: settings?.frequency ?? 'weekly',
     weekday: settings?.frequency === 'weekly' ? String(settings.day ?? 1) : '1',
     monthDay: settings?.frequency === 'monthly' ? String(settings.day ?? 1) : '1',
@@ -62,17 +64,14 @@ export function ImportSettingsForm({ data }: { data: SettingsResponse }) {
         time: form.time,
       },
       {
-        onSuccess: () => {
-          setForm((current) => ({ ...current, davPassword: '' }));
-          setSaved(true);
-        },
+        onSuccess: () => setSaved(true),
       },
     );
   };
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
-      <Field label="URL файла" error={fields.davUrl} hint="Адрес книги Pricer.xlsm на DAV-сервере">
+      <Field label="URL файла" error={fields.davUrl}>
         {({ id, describedBy, invalid }) => (
           <TextInput
             id={id}
@@ -104,18 +103,22 @@ export function ImportSettingsForm({ data }: { data: SettingsResponse }) {
         <Field
           label="Пароль"
           error={fields.davPassword}
-          hint={passwordSet ? 'Пароль сохранён. Оставьте пустым, чтобы не менять' : undefined}
+          hint={
+            passwordSet && !data.settings?.davPassword
+              ? 'Сохранённый пароль не удалось прочитать — введите его заново'
+              : undefined
+          }
         >
           {({ id, describedBy, invalid }) => (
             <TextInput
               id={id}
-              type="password"
+              type="text"
               value={form.davPassword}
               onChange={(event) => set('davPassword', event.target.value)}
-              placeholder={passwordSet ? '••••••••' : ''}
-              autoComplete="new-password"
+              autoComplete="off"
               aria-describedby={describedBy}
               aria-invalid={invalid}
+              spellCheck={false}
             />
           )}
         </Field>
@@ -174,7 +177,7 @@ export function ImportSettingsForm({ data }: { data: SettingsResponse }) {
           </Field>
         )}
 
-        <Field label="Время запуска" error={fields.time} hint="По московскому времени">
+        <Field label="Время запуска (по МСК)" error={fields.time}>
           {({ id, describedBy, invalid }) => (
             <TextInput
               id={id}

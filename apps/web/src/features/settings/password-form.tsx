@@ -1,7 +1,9 @@
 import { type FormEvent, useState } from 'react';
 import { isApiError } from '../../api/client.ts';
 import { useChangePassword } from '../../api/queries.ts';
-import { Button, Field, Notice, TextInput } from '../../components/ui.tsx';
+import { Button } from '../../components/button.tsx';
+import { TextInput } from '../../components/input.tsx';
+import { Field, Notice } from '../../components/ui.tsx';
 
 const EMPTY = { current: '', password: '', confirmation: '' };
 

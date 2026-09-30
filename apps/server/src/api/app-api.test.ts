@@ -175,7 +175,7 @@ describe('настройки импорта', () => {
     time: '09:00',
   };
 
-  it('сохраняет, не возвращает пароль DAV и считает следующий запуск', async () => {
+  it('сохраняет, возвращает пароль DAV для показа и считает следующий запуск', async () => {
     const headers = await loggedIn();
     const empty = settingsResponseSchema.parse(
       (await app.inject({ url: '/api/settings', headers })).json(),
@@ -194,15 +194,20 @@ describe('настройки импорта', () => {
       davUrl: valid.davUrl,
       davUsername: 'pricer',
       davPasswordSet: true,
+      davPassword: 'dav-secret',
       frequency: 'weekly',
       day: 1,
       time: '09:00',
     });
-    expect(JSON.stringify(body)).not.toContain('dav-secret');
     expect(new Date(body.nextRunAt ?? '').getUTCDay()).toBe(1); // понедельник
 
+    // В БД пароль лежит зашифрованным; GET отдаёт расшифрованный и не кэшируется.
     const stored = appDb.prepare('SELECT dav_password_enc FROM settings').pluck().get();
     expect(stored).toMatch(/^v1:/);
+    expect(stored).not.toContain('dav-secret');
+    const fetched = await app.inject({ url: '/api/settings', headers });
+    expect(fetched.json().settings.davPassword).toBe('dav-secret');
+    expect(fetched.headers['cache-control']).toBe('no-store');
   });
 
   it('без нового пароля оставляет сохранённый', async () => {
@@ -216,7 +221,11 @@ describe('настройки импорта', () => {
       payload: { ...valid, davPassword: '', frequency: 'daily', day: 5 },
     });
     expect(response.statusCode).toBe(200);
-    expect(response.json().settings).toMatchObject({ frequency: 'daily', day: null });
+    expect(response.json().settings).toMatchObject({
+      frequency: 'daily',
+      day: null,
+      davPassword: 'dav-secret',
+    });
     expect(appDb.prepare('SELECT dav_password_enc FROM settings').pluck().get()).toBe(before);
   });
 

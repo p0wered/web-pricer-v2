@@ -1,7 +1,8 @@
 import { Loader2 } from 'lucide-react';
 import { createBrowserRouter, Navigate, Outlet, useLocation } from 'react-router';
 import { useSession } from '../api/queries.ts';
-import { Button, Notice } from '../components/ui.tsx';
+import { Button } from '../components/button.tsx';
+import { Notice } from '../components/ui.tsx';
 import { LoginPage } from '../features/auth/login-page.tsx';
 import { SearchPage } from '../features/search/search-page.tsx';
 import { SettingsPage } from '../features/settings/settings-page.tsx';

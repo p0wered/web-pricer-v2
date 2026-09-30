@@ -1,8 +1,8 @@
-// Настройки импорта (одна запись). Пароль DAV хранится зашифрованным APP_SECRET и наружу
-// не отдаётся — только признак «задан».
+// Настройки импорта (одна запись). Пароль DAV хранится зашифрованным APP_SECRET; в API
+// отдаётся расшифрованным — страница настроек (за входом) показывает его всегда.
 import type { ImportFrequency, ImportSettings, SettingsUpdate } from '@webpricer/shared';
 import type { AppDatabase } from '../db/app-db.ts';
-import { encryptSecret } from '../secrets.ts';
+import { decryptSecret, encryptSecret } from '../secrets.ts';
 import type { Schedule } from '../scheduler/schedule.ts';
 
 interface SettingsRow {
@@ -34,6 +34,7 @@ export class SettingsStore {
       davUrl: row.dav_url,
       davUsername: row.dav_username,
       davPasswordSet: row.dav_password_enc !== '',
+      davPassword: this.davPassword(row),
       frequency: row.schedule_frequency,
       day: row.schedule_day,
       time: row.schedule_time,
@@ -75,6 +76,15 @@ export class SettingsStore {
         time: update.time,
         updatedAt: new Date().toISOString(),
       });
+  }
+
+  private davPassword(row: SettingsRow): string {
+    if (row.dav_password_enc === '') return '';
+    try {
+      return decryptSecret(row.dav_password_enc, this.appSecret);
+    } catch {
+      return ''; // APP_SECRET сменили или запись повреждена
+    }
   }
 
   private row(): SettingsRow | undefined {

@@ -23,7 +23,10 @@ export function registerSettingsRoutes(api: FastifyInstance, options: SettingsRo
     nextRunAt: scheduler.nextRunAt()?.toISOString() ?? null,
   });
 
-  api.get('/settings', async () => current());
+  api.get('/settings', async (_request, reply) => {
+    reply.header('Cache-Control', 'no-store'); // в ответе пароль DAV
+    return current();
+  });
 
   api.put('/settings', async (request, reply) => {
     const parsed = settingsUpdateSchema.safeParse(request.body);

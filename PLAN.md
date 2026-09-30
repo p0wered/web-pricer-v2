@@ -273,7 +273,7 @@ catalog.sqlite — каталог позиций из последнего ус�
 | POST | `/api/auth/logout` | Выход (`204`) |
 | GET | `/api/auth/me` | `{ authenticated: true }` или `401` |
 | GET | `/api/search?q&list=main\|special&sort=relevance\|price_asc\|price_desc&offset&limit` | `{ total, offset, items[], dataVersion }`; `503`, пока индекс загружается впервые |
-| GET | `/api/settings` | `{ settings \| null, nextRunAt }`; пароль DAV не возвращается — только `davPasswordSet` |
+| GET | `/api/settings` | `{ settings \| null, nextRunAt }`; пароль DAV возвращается расшифрованным (`davPassword`) вместе с `davPasswordSet`, ответ `no-store` |
 | PUT | `/api/settings` | Сохранение; пустой пароль DAV — оставить прежний; расписание применяется сразу |
 | POST | `/api/settings/password` | `{ current, password, confirmation }` → `204`; остальные сессии завершаются |
 | POST | `/api/import` | Ручной импорт → `202 { runId }` или `409 { error, runId }`, если импорт уже идёт |
@@ -294,7 +294,7 @@ catalog.sqlite — каталог позиций из последнего ус�
 - Пароль входа — `scrypt` (`node:crypto`), минимум 8 символов. Начальный пароль берётся из `APP_INITIAL_PASSWORD` при первом старте (если пароль в БД не задан и переменной нет — сервер не стартует с понятным сообщением); сменить можно в настройках или через `webpricer password`; утерянный пароль — `webpricer password --reset` (в Docker, если сервер не стартует: `docker compose run --rm webpricer2 webpricer password --reset`).
 - `APP_SECRET` обязателен для сервера: без него он не стартует.
 - Сессия — случайный токен в cookie `HttpOnly; SameSite=Lax` (в БД — только его SHA-256); время жизни — 120 минут неактивности, как в старом (`SESSION_TTL_MINUTES`), cookie продлевается вместе с сессией. После смены пароля остальные сессии завершаются (в старой версии оставались).
-- Пароль DAV шифруется ключом из `APP_SECRET` (AES-256-GCM); в API только на запись; в форме — `type="password"` с пометкой «задан».
+- Пароль DAV шифруется ключом из `APP_SECRET` (AES-256-GCM); в API отдаётся расшифрованным (страница настроек за входом); в форме — обычное текстовое поле, пароль виден всегда.
 - Защита от CSRF: `SameSite=Lax` + обязательный заголовок `X-Requested-With: webpricer` у изменяющих запросов — браузер не отправит его с чужого сайта без CORS-разрешения (CORS не включён).
 - **Работа за HTTPS-прокси заказчика** (устройство прокси нам неизвестно, поэтому всё настраивается через env с безопасными значениями по умолчанию):
   - `TRUST_PROXY=true` — брать IP клиента из `X-Forwarded-For`. Иначе все пользователи будут выглядеть как один IP прокси, и 5 неудачных попыток входа одного человека заблокируют вход всем;

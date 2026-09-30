@@ -21,7 +21,7 @@ export function ResultPanel({ title, query, active, children }: ResultPanelProps
       className={cx(CARD, 'flex h-full min-h-0 min-w-0 flex-col overflow-hidden')}
     >
       <div className="relative flex h-12 shrink-0 items-center gap-2 border-b border-line px-4">
-        <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-fg">{title}</h2>
+        <h2 className="text-base font-bold tracking-[-0.01em] text-fg">{title}</h2>
         {active && total !== undefined && (
           <span
             className={cx(

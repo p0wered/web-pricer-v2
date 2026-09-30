@@ -3,7 +3,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Download, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useImportRun, useStartImport } from '../../api/queries.ts';
-import { Button, Notice } from '../../components/ui.tsx';
+import { Button } from '../../components/button.tsx';
+import { Notice } from '../../components/ui.tsx';
 import { formatCount } from '../../lib/format.ts';
 
 const STAGE_TEXT: Record<NonNullable<ImportRun['stage']>, string> = {

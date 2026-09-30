@@ -1,6 +1,6 @@
 import { ClipboardPaste, Copy, Scissors, Search, X } from 'lucide-react';
 import { type FormEvent, useRef, useState } from 'react';
-import { Button } from '../../components/ui.tsx';
+import { Button } from '../../components/button.tsx';
 import { applyLayoutConversion } from '../../lib/keyboard-layout.ts';
 import { readStored, writeStored } from '../../lib/storage.ts';
 
@@ -68,14 +68,14 @@ export function SearchBar({ value, onChange, onSubmit }: SearchBarProps) {
           name="q"
           value={value}
           onChange={(event) => onChange(applyLayoutConversion(value, event.target.value, convert))}
-          placeholder="Название детали, например: К52-1 50В 15мкФ"
+          placeholder="Введите запрос"
           aria-label="Запрос"
           autoFocus
           autoComplete="off"
           spellCheck={false}
           className={
-            'h-9 w-full rounded-md border border-line bg-sunken pr-9 pl-9 text-sm text-fg transition-colors duration-150 ' +
-            'hover:border-line-strong focus:border-accent focus:bg-surface focus:outline-none focus:ring-3 focus:ring-accent/15 ' +
+            'h-9 w-full border border-transparent rounded-lg bg-sunken pr-9 pl-9 text-sm text-fg transition duration-150 ' +
+            'focus:border-accent focus:bg-surface focus:outline-none focus:ring-0 ' +
             '[&::-webkit-search-cancel-button]:hidden'
           }
         />
@@ -94,7 +94,7 @@ export function SearchBar({ value, onChange, onSubmit }: SearchBarProps) {
           </button>
         )}
       </div>
-      <Button type="submit" variant="primary" icon={Search}>
+      <Button type="submit" variant="primary">
         Найти
       </Button>
       <Button
@@ -104,9 +104,9 @@ export function SearchBar({ value, onChange, onSubmit }: SearchBarProps) {
       >
         EN→RU
       </Button>
-      <div className="hidden items-center sm:flex" role="group" aria-label="Буфер обмена">
+      <div className="hidden items-center gap-2 sm:flex" role="group" aria-label="Буфер обмена">
         <Button
-          variant="ghost"
+          variant="secondary"
           icon={ClipboardPaste}
           disabled={!clipboard}
           onClick={paste}
@@ -116,7 +116,7 @@ export function SearchBar({ value, onChange, onSubmit }: SearchBarProps) {
           <span className="hidden 2xl:inline">Вставить</span>
         </Button>
         <Button
-          variant="ghost"
+          variant="secondary"
           icon={Copy}
           disabled={!clipboard || !value}
           onClick={() => copy(false)}
@@ -126,7 +126,7 @@ export function SearchBar({ value, onChange, onSubmit }: SearchBarProps) {
           <span className="hidden 2xl:inline">Копировать</span>
         </Button>
         <Button
-          variant="ghost"
+          variant="secondary"
           icon={Scissors}
           disabled={!clipboard || !value}
           onClick={() => copy(true)}

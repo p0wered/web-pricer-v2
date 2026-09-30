@@ -24,11 +24,13 @@ function isHttpUrl(value: string): boolean {
   }
 }
 
-/** Настройки импорта в ответе API. Пароль DAV никогда не возвращается — только признак. */
+/** Настройки импорта в ответе API. Пароль DAV отдаётся открытым: страница настроек показывает его всегда. */
 export const importSettingsSchema = z.object({
   davUrl: z.string(),
   davUsername: z.string(),
   davPasswordSet: z.boolean(),
+  /** Пустая строка — пароля нет или его не расшифровать (сменился APP_SECRET). */
+  davPassword: z.string(),
   frequency: importFrequencySchema,
   /** Неделя: 1–7 (пн–вс); месяц: 1–31; ежедневно — null. */
   day: z.number().int().nullable(),

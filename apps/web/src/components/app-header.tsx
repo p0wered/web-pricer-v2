@@ -3,23 +3,22 @@ import type { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useLogout } from '../api/queries.ts';
 import { useTheme } from '../lib/theme.ts';
-import { Button, buttonClasses, CARD, cx } from './ui.tsx';
-
-export function Wordmark() {
-  return (
-    <span className="text-[15px] font-semibold tracking-[-0.01em] text-fg">
-      Web<span className="text-accent-text">Pricer</span>
-    </span>
-  );
-}
+import { Button, buttonClasses } from './button.tsx';
+import { CARD, cx } from './ui.tsx';
 
 export function ThemeToggle() {
   const { theme, toggle } = useTheme();
   const label = theme === 'dark' ? 'Светлая тема' : 'Тёмная тема';
   const Icon = theme === 'dark' ? Sun : Moon;
   return (
-    <Button variant="ghost" onClick={toggle} aria-label={label} title={label} className="w-9 px-0">
-      <Icon aria-hidden size={18} strokeWidth={1.75} />
+    <Button
+      variant="secondary"
+      onClick={toggle}
+      aria-label={label}
+      title={label}
+      className="w-9 px-0!"
+    >
+      <Icon aria-hidden size={14} strokeWidth={1.75} />
     </Button>
   );
 }
@@ -29,7 +28,7 @@ function LogoutButton() {
   const navigate = useNavigate();
   return (
     <Button
-      variant="ghost"
+      variant="secondary"
       icon={LogOut}
       disabled={logout.isPending}
       aria-label="Выйти"
@@ -52,16 +51,12 @@ interface AppHeaderProps {
 /** Верхний блок приложения: название, содержимое страницы, тема и навигация. */
 export function AppHeader({ children, page }: AppHeaderProps) {
   return (
-    // На узком экране — две строки: название и навигация, под ними содержимое страницы.
     <header
       className={cx(
         CARD,
-        'flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2.5 px-3 py-2.5 md:flex-nowrap md:px-4',
+        'flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2.5 md:flex-nowrap p-2',
       )}
     >
-      <Link to="/search" className="shrink-0 rounded-sm" aria-label="WebPricer — к поиску">
-        <Wordmark />
-      </Link>
       <div className="order-last flex w-full min-w-0 items-center gap-2 md:order-none md:w-auto md:flex-1">
         {children}
       </div>
@@ -70,7 +65,7 @@ export function AppHeader({ children, page }: AppHeaderProps) {
         {page === 'search' ? (
           <Link
             to="/settings"
-            className={buttonClasses('ghost')}
+            className={buttonClasses('secondary')}
             aria-label="Настройки"
             title="Настройки"
           >
@@ -80,7 +75,7 @@ export function AppHeader({ children, page }: AppHeaderProps) {
         ) : (
           <Link
             to="/search"
-            className={buttonClasses('ghost')}
+            className={buttonClasses('secondary')}
             aria-label="К поиску"
             title="К поиску"
           >

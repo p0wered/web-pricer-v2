@@ -61,7 +61,7 @@ export function SearchPage() {
                 columns={stopColumns}
                 query={special}
                 idle={!active}
-                idleText="Здесь появятся совпадения из стоп-листа"
+                idleText="Нет данных для отображения"
                 emptyText="В стоп-листе ничего не найдено"
                 resetKey={query}
               />
@@ -74,7 +74,7 @@ export function SearchPage() {
                 columns={mainColumns}
                 query={main}
                 idle={!active}
-                idleText="Введите название детали и нажмите Enter"
+                idleText="Нет данных для отображения"
                 emptyText="Ничего не найдено. Попробуйте сократить запрос или проверить раскладку."
                 resetKey={`${query}|${priceSort}`}
               />

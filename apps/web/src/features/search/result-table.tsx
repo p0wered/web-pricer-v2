@@ -4,7 +4,8 @@ import type { SearchItem, SearchResponse } from '@webpricer/shared';
 import type { InfiniteData, UseInfiniteQueryResult } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { type CSSProperties, type ReactNode, useEffect, useMemo, useRef } from 'react';
-import { Button, cx } from '../../components/ui.tsx';
+import { Button } from '../../components/button.tsx';
+import { cx } from '../../components/ui.tsx';
 
 export interface Column {
   id: string;
