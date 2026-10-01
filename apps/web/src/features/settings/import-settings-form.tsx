@@ -179,7 +179,6 @@ export function ImportSettingsForm({ data }: { data: SettingsResponse }) {
                   inputMode="url"
                   value={form.davUrl}
                   onChange={(event) => set('davUrl', event.target.value)}
-                  placeholder="https://cloud.example.com/remote.php/dav/files/…/Pricer.xlsm"
                   aria-describedby={describedBy}
                   aria-invalid={invalid}
                   spellCheck={false}

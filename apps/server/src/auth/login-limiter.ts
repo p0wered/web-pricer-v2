@@ -29,6 +29,7 @@ export class LoginLimiter {
   }
 
   recordFailure(key: string, now = Date.now()): void {
+    this.pruneExpired(now);
     const entry = this.current(key, now);
     if (entry) entry.failures++;
     else this.entries.set(key, { failures: 1, resetAt: now + this.options.windowMs });
@@ -36,6 +37,23 @@ export class LoginLimiter {
 
   reset(key: string): void {
     this.entries.delete(key);
+  }
+
+  /** Сколько IP сейчас учитывается (для тестов). */
+  get size(): number {
+    return this.entries.size;
+  }
+
+  /**
+   * Удаляет истёкшие записи, иначе каждый новый IP с неудачной попыткой оставался бы в памяти
+   * до перезапуска. Окно у всех записей одно, и они добавляются по времени, поэтому Map
+   * упорядочена по resetAt: удаляем с начала до первой живой записи.
+   */
+  private pruneExpired(now: number): void {
+    for (const [key, entry] of this.entries) {
+      if (entry.resetAt > now) break;
+      this.entries.delete(key);
+    }
   }
 
   private current(key: string, now: number): Entry | undefined {

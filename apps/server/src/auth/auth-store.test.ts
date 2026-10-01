@@ -78,4 +78,16 @@ describe('LoginLimiter', () => {
     limiter.recordFailure('1.2.3.4', t0);
     expect(limiter.retryAfterSeconds('1.2.3.4', t0)).toBe(0);
   });
+
+  it('не копит в памяти IP, у которых окно прошло', () => {
+    const limiter = new LoginLimiter();
+    const t0 = 1_000_000;
+    for (let i = 0; i < 1000; i++) limiter.recordFailure(`10.0.${i >> 8}.${i & 255}`, t0);
+    limiter.recordFailure('1.2.3.4', t0 + 30_000);
+    expect(limiter.size).toBe(1001);
+
+    limiter.recordFailure('5.6.7.8', t0 + 60_000);
+    expect(limiter.size).toBe(2); // 1.2.3.4 (окно ещё идёт) и 5.6.7.8
+    expect(limiter.retryAfterSeconds('1.2.3.4', t0 + 60_000)).toBe(0);
+  });
 });

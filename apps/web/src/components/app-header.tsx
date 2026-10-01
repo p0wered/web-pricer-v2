@@ -1,4 +1,4 @@
-import { LogOut, Moon, Settings, Sun } from 'lucide-react';
+import { LogOut, Moon, Settings } from 'lucide-react';
 import {
   type KeyboardEvent,
   type PointerEvent,
@@ -11,26 +11,10 @@ import {
 import { Link, useNavigate } from 'react-router';
 import { useLogout } from '../api/queries.ts';
 import { useTheme } from '../lib/theme.ts';
-import { Button, buttonClasses } from './button.tsx';
+import { buttonClasses } from './button.tsx';
 import { popoverSurface } from './popover.tsx';
 import { focusOnClick } from './select.tsx';
 import { CARD, cx } from './ui.tsx';
-
-export function ThemeToggle() {
-  const { theme, toggle } = useTheme();
-  const label = theme === 'dark' ? 'Светлая тема' : 'Тёмная тема';
-  const Icon = theme === 'dark' ? Sun : Moon;
-  return (
-    <Button
-      variant="secondary"
-      size="lg"
-      icon={Icon}
-      onClick={toggle}
-      aria-label={label}
-      title={label}
-    />
-  );
-}
 
 const MENU_ITEM =
   'group flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-sm text-fg ' +

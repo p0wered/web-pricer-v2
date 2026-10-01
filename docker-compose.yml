@@ -19,3 +19,9 @@ services:
       SEARCH_CACHE_SIZE: ${SEARCH_CACHE_SIZE:-100}
     volumes:
       - ./data:/app/data
+    # Без лимита Docker хранит логи контейнера бесконечно: держим не больше ~50 МБ (5 файлов по 10 МБ).
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: '5'
