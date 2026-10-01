@@ -21,20 +21,23 @@ export function SettingsPage() {
     <div className="h-full overflow-y-auto">
       {/* Одна колонка: разделы идут сверху вниз в порядке смысла — импорт, потом пароль. */}
       <div className="mx-auto flex w-full max-w-[680px] flex-col gap-8 px-4 pt-3 pb-12">
-        <div className="flex flex-col gap-4">
-          {/* Меню позиционируется от этой строки — под её правым краем. */}
-          <nav className="relative flex items-center justify-between" aria-label="Приложение">
-            <Link
-              to="/search"
-              className={buttonClasses({ variant: 'ghost', size: 'lg', className: '-ml-3' })}
-            >
-              <ChevronLeft aria-hidden size={16} strokeWidth={1.75} />
-              Поиск
-            </Link>
-            <AppMenu settings={false} />
+        {/* Меню позиционируется от этой строки — под её правым краем. */}
+        <header className="relative flex items-center justify-between">
+          <Link
+            to="/search"
+            className={buttonClasses({ variant: 'ghost', size: 'lg', className: 'pl-1.5' })}
+          >
+            <ChevronLeft aria-hidden size={16} strokeWidth={1.75} />
+            Поиск
+          </Link>
+          {/* По центру всей строки, а не промежутка между кнопками — их ширина разная. */}
+          <h1 className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-[15px] font-semibold tracking-[-0.01em] text-fg">
+            Настройки
+          </h1>
+          <nav aria-label="Приложение">
+            <AppMenu settings={false} variant="ghost" />
           </nav>
-          <h1 className="px-1 text-[26px] font-bold tracking-[-0.02em] text-fg">Настройки</h1>
-        </div>
+        </header>
 
         <Section title="Импорт данных">
           <ImportPanel nextRunAt={settings.data?.nextRunAt ?? null} />

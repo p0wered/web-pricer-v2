@@ -10,11 +10,14 @@ const BUTTON_BASE =
   'inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg text-sm font-medium ' +
   'whitespace-nowrap transition-colors duration-150 select-none hover:cursor-pointer disabled:pointer-events-none disabled:opacity-50';
 
+/** Наведение у secondary и ghost: рамка и подсветка акцентом. */
+const ACCENT_FRAME = 'border border-transparent hover:border-accent/60 hover:bg-accent/12';
+
 const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
   primary: 'bg-accent text-accent-fg hover:bg-accent-hover',
-  secondary:
-    'border border-transparent bg-sunken text-fg hover:border-accent/60 hover:text-accent hover:bg-accent/12',
-  ghost: 'text-muted hover:bg-sunken hover:text-fg',
+  secondary: `bg-sunken text-fg hover:text-accent ${ACCENT_FRAME}`,
+  // Без фона в покое; при наведении акцентом окрашивается только иконка, текст остаётся.
+  ghost: `text-fg ${ACCENT_FRAME} [&_svg]:transition-colors hover:[&_svg]:text-accent`,
 };
 
 // Отступы задаются здесь, а не в BUTTON_BASE: px-3 и px-0 в одном className конфликтуют.

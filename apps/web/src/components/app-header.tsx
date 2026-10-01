@@ -48,7 +48,14 @@ const menuItems = (menu: HTMLElement) => [
  * Меню приложения (шаблон WAI-ARIA «menu button»): настройки, тема, выход.
  * Панель позиционируется от ближайшего `relative`-предка — под его правым краем.
  */
-export function AppMenu({ settings }: { settings: boolean }) {
+export function AppMenu({
+  settings,
+  variant = 'secondary',
+}: {
+  settings: boolean;
+  /** `ghost` — без фона в покое (страница настроек); по умолчанию — как кнопки в хедере поиска. */
+  variant?: 'secondary' | 'ghost';
+}) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -137,11 +144,15 @@ export function AppMenu({ settings }: { settings: boolean }) {
           else show('first');
         }}
         onKeyDown={onTriggerKeyDown}
+        // Бургер — сама иконка (полоски цвета текста): у ghost акцентом окрашивается цвет кнопки.
         className={buttonClasses({
+          variant,
           size: 'lg',
           square: true,
-          className:
+          className: cx(
             'relative aria-expanded:border-accent/60 aria-expanded:bg-accent/12 aria-expanded:text-accent',
+            variant === 'ghost' && 'hover:text-accent',
+          ),
         })}
       >
         <span aria-hidden className="burger-bar" />

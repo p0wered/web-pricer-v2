@@ -33,7 +33,7 @@ export function SaveBar({ open, error, submitLabel, icon, onReset }: SaveBarProp
     // -mt-2 гасит отступ раздела между блоком и свёрнутой строкой; pt-2 возвращает его раскрытой.
     <Reveal ref={ref} open={open} className="-mt-2">
       <div className="pt-2">
-        <div className={cx(CARD, 'flex flex-wrap items-center justify-end gap-2 p-2 pl-4')}>
+        <div className={cx(CARD, 'flex flex-wrap items-center justify-end gap-2 p-3 pl-4')}>
           <p
             role={error ? 'alert' : 'status'}
             className={cx(
