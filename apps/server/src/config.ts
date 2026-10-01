@@ -13,7 +13,7 @@ const envSchema = z.object({
   HOST: z.string().default('0.0.0.0'),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
-  // За HTTPS-прокси заказчика IP клиента берётся из X-Forwarded-For (см. PLAN.md §6.8).
+  // За HTTPS-прокси заказчика IP клиента берётся из X-Forwarded-For.
   TRUST_PROXY: optional(booleanFromEnv),
   WEB_DIST_DIR: optional(z.string()),
   DATA_DIR: optional(z.string()),

@@ -1,5 +1,5 @@
 // Преобразование значений ячеек в то, что хранится в каталоге.
-// Правила выведены из реальных данных Pricer.xlsm (см. PLAN.md §2 и §6.3).
+// Правила выведены из реальных данных Pricer.xlsm.
 import type { CellValue } from './xlsx/xlsx-reader.ts';
 
 // BOM, zero-width space/joiner, word joiner, мягкий перенос.

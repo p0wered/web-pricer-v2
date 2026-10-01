@@ -1,5 +1,5 @@
 // Качество поиска на реальном каталоге (регрессионный набор из tools/benchmark/queries.json
-// и правила из PLAN.md §6.5). Каталог большой и в репозиторий не входит:
+// и правила нормализации запросов). Каталог большой и в репозиторий не входит:
 //   PRICER_CATALOG=data/catalog.sqlite npm test
 import { normalizeText } from '@webpricer/shared';
 import Database from 'better-sqlite3';

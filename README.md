@@ -124,5 +124,4 @@ PRICER_XLSX=/путь/к/Pricer.xlsm PRICER_CATALOG=data/catalog.sqlite npm test
 - `packages/shared` - общие схемы API и типы
 - `tools/benchmark` - замеры скорости поиска
 
-Решения и план разработки - в [PLAN.md](PLAN.md), замеры против старой версии - в
-[docs/benchmarks.md](docs/benchmarks.md).
+Замеры против старой версии - в [docs/benchmarks.md](docs/benchmarks.md).
