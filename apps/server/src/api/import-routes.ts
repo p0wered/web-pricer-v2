@@ -17,10 +17,14 @@ export function registerImportRoutes(api: FastifyInstance, imports: ImportServic
     }
   });
 
-  // Идущий сейчас импорт (кнопка, расписание или CLI) — страница настроек подхватывает его ход.
-  api.get('/import/current', async () => {
-    const runId = imports.runningRunId();
-    return { run: runId === null ? null : imports.getRun(runId) };
+  // Идущий импорт (кнопка, расписание или CLI) и последний завершённый — для страницы настроек.
+  api.get('/import/status', async () => {
+    const runningId = imports.runningRunId();
+    const lastId = imports.lastFinishedRunId();
+    return {
+      running: runningId === null ? null : imports.getRun(runningId),
+      last: lastId === null ? null : imports.getRun(lastId),
+    };
   });
 
   api.get('/import/:id', async (request, reply) => {

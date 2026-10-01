@@ -203,6 +203,8 @@
   position: absolute;
   inset: 0;
   width: 40%;
+  /* Скругление — как у самой полосы (у полосы импорта в настройках — rounded-full). */
+  border-radius: inherit;
   background: var(--accent);
   animation: progress-slide 1.1s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }

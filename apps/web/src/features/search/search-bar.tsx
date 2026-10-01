@@ -95,7 +95,7 @@ export function SearchBar({ value, onChange, onSubmit }: SearchBarProps) {
         size="lg"
         pressed={convert}
         onClick={toggleConvert}
-        className="text-xs text-fg"
+        className="text-xs"
         title="Переводить набранное в английской раскладке в русскую"
       >
         EN→RU

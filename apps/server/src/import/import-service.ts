@@ -109,6 +109,15 @@ export class ImportService {
     return typeof id === 'number' ? id : null;
   }
 
+  /** Номер последнего завершённого импорта — успешного или с ошибкой. */
+  lastFinishedRunId(): number | null {
+    const id = this.deps.appDb
+      .prepare(`SELECT id FROM import_runs WHERE status != 'running' ORDER BY id DESC LIMIT 1`)
+      .pluck()
+      .get();
+    return typeof id === 'number' ? id : null;
+  }
+
   getRun(id: number): ImportRun | null {
     const row = this.deps.appDb
       .prepare(

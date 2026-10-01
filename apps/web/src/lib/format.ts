@@ -37,3 +37,41 @@ const RU_DATE_TIME = new Intl.DateTimeFormat('ru-RU', {
 export function formatDateTime(iso: string): string {
   return RU_DATE_TIME.format(new Date(iso));
 }
+
+const MOSCOW = 'Europe/Moscow';
+/** «ГГГГ-ММ-ДД» по Москве — чтобы сравнивать дни. */
+const MOSCOW_DAY = new Intl.DateTimeFormat('en-CA', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  timeZone: MOSCOW,
+});
+const MOSCOW_TIME = new Intl.DateTimeFormat('ru-RU', {
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: MOSCOW,
+});
+const MOSCOW_DATE = new Intl.DateTimeFormat('ru-RU', {
+  day: 'numeric',
+  month: 'long',
+  timeZone: MOSCOW,
+});
+const MOSCOW_DATE_YEAR = new Intl.DateTimeFormat('ru-RU', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: MOSCOW,
+});
+
+/** Недавний момент по Москве: «сегодня в 09:04», «вчера в 22:10», «28 сентября в 09:04». */
+export function formatRecentDateTime(iso: string, now = new Date()): string {
+  const date = new Date(iso);
+  const day = MOSCOW_DAY.format(date);
+  const today = MOSCOW_DAY.format(now);
+  const time = MOSCOW_TIME.format(date);
+  if (day === today) return `сегодня в ${time}`;
+  // В Москве нет перехода на летнее время — сутки всегда 24 часа.
+  if (day === MOSCOW_DAY.format(new Date(now.getTime() - 86_400_000))) return `вчера в ${time}`;
+  const sameYear = day.slice(0, 4) === today.slice(0, 4);
+  return `${(sameYear ? MOSCOW_DATE : MOSCOW_DATE_YEAR).format(date)} в ${time}`;
+}

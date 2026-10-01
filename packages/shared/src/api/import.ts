@@ -44,9 +44,14 @@ export const importRunSchema = z.object({
 
 export const startImportResponseSchema = z.object({ runId: z.number().int() });
 
-/** Идущий сейчас импорт — чтобы страница настроек показала его ход сразу при открытии. */
-export const currentImportResponseSchema = z.object({ run: importRunSchema.nullable() });
+/** Состояние импорта для страницы настроек. */
+export const importStatusResponseSchema = z.object({
+  /** Идущий сейчас импорт — его ход показывается сразу при открытии страницы. */
+  running: importRunSchema.nullable(),
+  /** Последний завершённый импорт (успешный или с ошибкой); `null` — импортов ещё не было. */
+  last: importRunSchema.nullable(),
+});
 
 export type ImportProgress = z.infer<typeof importProgressSchema>;
 export type ImportRun = z.infer<typeof importRunSchema>;
-export type CurrentImportResponse = z.infer<typeof currentImportResponseSchema>;
+export type ImportStatusResponse = z.infer<typeof importStatusResponseSchema>;

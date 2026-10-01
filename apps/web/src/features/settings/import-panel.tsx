@@ -1,12 +1,12 @@
-import type { ImportRun } from '@webpricer/shared';
+import type { ImportRun, ImportStatusResponse } from '@webpricer/shared';
 import { useQueryClient } from '@tanstack/react-query';
-import { Download } from 'lucide-react';
+import { CircleAlert, CircleCheck, Download } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useCurrentImport, useImportRun, useStartImport } from '../../api/queries.ts';
+import { useImportRun, useImportStatus, useStartImport } from '../../api/queries.ts';
 import { Button } from '../../components/button.tsx';
 import { Reveal } from '../../components/reveal.tsx';
 import { Notice } from '../../components/ui.tsx';
-import { formatCount } from '../../lib/format.ts';
+import { formatCount, formatRecentDateTime } from '../../lib/format.ts';
 
 type Stage = NonNullable<ImportRun['stage']>;
 
@@ -106,7 +106,7 @@ function ImportProgress({ view }: { view: ProgressView }) {
         className="relative h-1.5 overflow-hidden rounded-full bg-sunken"
       >
         {percent === null ? (
-          <div className="progress-bar absolute inset-0" />
+          <div className="progress-bar absolute inset-0 rounded-full" />
         ) : (
           // key — на новом этапе полоса начинается заново, а не отъезжает назад анимацией.
           <div
@@ -121,24 +121,69 @@ function ImportProgress({ view }: { view: ProgressView }) {
   );
 }
 
+const TRIGGERS: Record<ImportRun['trigger'], string> = {
+  schedule: 'по расписанию',
+  manual: 'вручную',
+  cli: 'из командной строки',
+};
+
+/** Итог последнего завершённого импорта: когда и как запущен, а при неудаче — какая ошибка. */
+function LastImport({ run }: { run: ImportRun | null }) {
+  if (!run) {
+    return <p className="text-[13px] text-subtle">Импорт ещё не выполнялся</p>;
+  }
+  const when = `${formatRecentDateTime(run.finishedAt ?? run.startedAt)} · ${TRIGGERS[run.trigger]}`;
+  if (run.status === 'failed') {
+    return (
+      <div className="flex gap-2 text-[13px]">
+        <CircleAlert
+          aria-hidden
+          size={15}
+          strokeWidth={2}
+          className="mt-0.5 shrink-0 text-danger"
+        />
+        <div className="min-w-0">
+          <p className="text-fg">Последний импорт не удался: {when}</p>
+          <p className="text-danger">{run.errorMessage ?? 'Ошибка при импорте.'}</p>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="flex gap-2 text-[13px]">
+      <CircleCheck aria-hidden size={15} strokeWidth={2} className="mt-0.5 shrink-0 text-success" />
+      <p className="min-w-0 text-subtle">Последний импорт: {when}</p>
+    </div>
+  );
+}
+
 /** Ручной импорт: запуск, ход и итог (как кнопка «Начать импорт» в старой версии). */
 export function ImportPanel({ nextRunAt }: { nextRunAt: string | null }) {
   const [runId, setRunId] = useState<number | null>(null);
   const [joined, setJoined] = useState(false);
   const start = useStartImport();
   // Импорт мог идти ещё до открытия страницы (расписание, CLI, другая вкладка) — подхватываем.
-  const current = useCurrentImport();
-  const activeId = runId ?? current.data?.run?.id ?? null;
+  const importStatus = useImportStatus();
+  const activeId = runId ?? importStatus.data?.running?.id ?? null;
   const run = useImportRun(activeId);
   const queryClient = useQueryClient();
 
   const status = run.data?.status;
   const running = start.isPending || status === 'running' || (activeId !== null && !run.data);
+  const finished = run.data && run.data.status !== 'running' ? run.data : null;
+  // Только что завершившийся на глазах импорт — и есть последний; иначе берём с сервера.
+  const lastRun = finished ?? importStatus.data?.last;
 
-  // После успешного импорта поиск должен брать свежие данные.
   useEffect(() => {
-    if (status === 'success') void queryClient.invalidateQueries({ queryKey: ['search'] });
-  }, [status, queryClient]);
+    if (!finished) return;
+    // Завершившийся импорт — теперь последний: иначе при следующем запуске, пока он идёт,
+    // строка «Последний импорт» вернулась бы к ответу, полученному при открытии страницы.
+    queryClient.setQueryData<ImportStatusResponse>(['import-status'], (old) =>
+      old && (!old.last || old.last.id <= finished.id) ? { ...old, last: finished } : old,
+    );
+    // После успешного импорта поиск должен брать свежие данные.
+    if (finished.status === 'success') void queryClient.invalidateQueries({ queryKey: ['search'] });
+  }, [finished, queryClient]);
 
   const launch = () =>
     start.mutate(undefined, {
@@ -176,16 +221,15 @@ export function ImportPanel({ nextRunAt }: { nextRunAt: string | null }) {
           </Notice>
         )}
         {start.isError && <Notice tone="error">{start.error.message}</Notice>}
-        {status === 'success' && run.data && (
-          <Notice tone="success">
-            Импорт завершён: детали — {formatCount(run.data.rowsMain ?? 0)} строк, стоп-лист —{' '}
-            {formatCount(run.data.rowsSpecial ?? 0)} строк.
-          </Notice>
-        )}
-        {status === 'failed' && run.data && (
-          <Notice tone="error">{run.data.errorMessage ?? 'Ошибка при импорте.'}</Notice>
-        )}
       </div>
+
+      {/* Пока идёт импорт, итог прошлого не показываем — рядом с полосой он читался бы как
+          итог текущего. Строка возвращается уже с результатом нового импорта. */}
+      <Reveal open={!running && lastRun !== undefined}>
+        <div aria-live="polite" className="pt-3">
+          {lastRun !== undefined && <LastImport run={lastRun} />}
+        </div>
+      </Reveal>
     </div>
   );
 }

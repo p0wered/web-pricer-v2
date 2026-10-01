@@ -20,6 +20,11 @@ const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
   ghost: `text-fg ${ACCENT_FRAME} [&_svg]:transition-colors hover:[&_svg]:text-accent`,
 };
 
+// Заменяет классы варианта целиком: cx не сливает конфликтующие утилиты,
+// и bg-sunken/text-fg/border-transparent перебили бы подсветку.
+const BUTTON_PRESSED =
+  'border border-accent/40 bg-accent-soft text-accent-text hover:border-accent/60';
+
 // Отступы задаются здесь, а не в BUTTON_BASE: px-3 и px-0 в одном className конфликтуют.
 const BUTTON_SIZES: Record<ButtonSize, { text: string; square: string }> = {
   md: { text: 'h-9 px-3', square: 'size-9' },
@@ -31,6 +36,7 @@ interface ButtonClassOptions {
   size?: ButtonSize;
   /** Кнопка только с иконкой. */
   square?: boolean;
+  pressed?: boolean | undefined;
   className?: string | undefined;
 }
 
@@ -39,10 +45,16 @@ export function buttonClasses({
   variant = 'secondary',
   size = 'md',
   square = false,
+  pressed = false,
   className,
 }: ButtonClassOptions = {}): string {
   const sizes = BUTTON_SIZES[size];
-  return cx(BUTTON_BASE, square ? sizes.square : sizes.text, BUTTON_VARIANTS[variant], className);
+  return cx(
+    BUTTON_BASE,
+    square ? sizes.square : sizes.text,
+    pressed ? BUTTON_PRESSED : BUTTON_VARIANTS[variant],
+    className,
+  );
 }
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -71,12 +83,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       ref={ref}
       type={type}
       aria-pressed={pressed}
-      className={cx(
-        buttonClasses({ variant, size, square: !children }),
-        pressed &&
-          'border-accent/40 bg-accent-soft text-accent-text hover:border-accent/60 hover:bg-accent-soft',
-        className,
-      )}
+      className={buttonClasses({ variant, size, square: !children, pressed, className })}
       {...props}
     >
       {Icon && <Icon aria-hidden size={15} strokeWidth={1.75} />}

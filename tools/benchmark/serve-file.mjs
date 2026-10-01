@@ -2,12 +2,34 @@
 // Использование:
 //   BENCH_USER=u BENCH_PASS=p node tools/benchmark/serve-file.mjs /path/to/Pricer.xlsm [port]
 // Файл доступен по любому пути: http://host:port/Pricer.xlsm
+// BENCH_RATE=5 — отдавать не быстрее 5 МБ/с: чтобы разглядеть этап скачивания в настройках
+// (без ограничения локальный файл скачивается мгновенно). Для замеров не задавать.
 import { createReadStream, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import path from 'node:path';
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 
 const [filePath, portArg = '8089'] = process.argv.slice(2);
-const { BENCH_USER: user, BENCH_PASS: pass } = process.env;
+const { BENCH_USER: user, BENCH_PASS: pass, BENCH_RATE: rateArg } = process.env;
+const bytesPerSecond = rateArg ? Number(rateArg) * 1024 * 1024 : null;
+
+if (bytesPerSecond !== null && !(bytesPerSecond > 0)) {
+  console.error('BENCH_RATE — скорость в МБ/с, больше нуля');
+  process.exit(1);
+}
+
+/** Чанки файла не быстрее заданной скорости: каждый ждёт своего момента от начала отдачи. */
+async function* throttled(stream, rate) {
+  const startedAt = Date.now();
+  let sent = 0;
+  for await (const chunk of stream) {
+    sent += chunk.length;
+    const wait = startedAt + (sent / rate) * 1000 - Date.now();
+    if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+    yield chunk;
+  }
+}
 
 if (!filePath || !user || !pass) {
   console.error('Нужны путь к файлу и переменные BENCH_USER / BENCH_PASS');
@@ -31,9 +53,13 @@ const server = createServer((request, response) => {
     response.end();
     return;
   }
-  createReadStream(filePath).pipe(response);
+  const file = createReadStream(filePath);
+  const body = bytesPerSecond ? Readable.from(throttled(file, bytesPerSecond)) : file;
+  // Клиент оборвал скачивание — просто закрываем поток файла.
+  pipeline(body, response).catch(() => file.destroy());
 });
 
 server.listen(Number(portArg), () => {
-  console.log(`Отдаю ${filePath} (${size} байт) на порту ${portArg}`);
+  const limit = bytesPerSecond ? `, не быстрее ${rateArg} МБ/с` : '';
+  console.log(`Отдаю ${filePath} (${size} байт) на порту ${portArg}${limit}`);
 });

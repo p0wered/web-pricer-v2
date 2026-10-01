@@ -6,6 +6,7 @@ import {
   CSRF_HEADER,
   CSRF_HEADER_VALUE,
   importRunSchema,
+  importStatusResponseSchema,
   settingsResponseSchema,
 } from '@webpricer/shared';
 import type { FastifyInstance, LightMyRequestResponse } from 'fastify';
@@ -334,6 +335,50 @@ describe('ручной импорт', () => {
     });
     expect(scheduler.runIfDue()).toBeNull();
     releaseImport?.();
+  });
+
+  it('отдаёт идущий и последний завершённый импорт', async () => {
+    const headers = await loggedIn();
+    const status = async () =>
+      importStatusResponseSchema.parse(
+        (await app.inject({ url: '/api/import/status', headers })).json(),
+      );
+    expect(await status()).toEqual({ running: null, last: null });
+
+    holdImport = true;
+    const { runId } = (await app.inject({ method: 'POST', url: '/api/import', headers })).json();
+    expect(await status()).toMatchObject({ running: { id: runId, status: 'running' }, last: null });
+
+    releaseImport?.();
+    await imports.whenIdle();
+    expect(await status()).toMatchObject({
+      running: null,
+      last: { id: runId, status: 'success', trigger: 'manual', rowsMain: 5, rowsSpecial: 2 },
+    });
+  });
+
+  it('отдаёт ход идущего импорта, пока он идёт', async () => {
+    let release: () => void = () => {};
+    const service = new ImportService({
+      appDb,
+      dataDir: root,
+      appSecret: APP_SECRET,
+      catalog,
+      runner: async (_input, _options, onProgress) => {
+        onProgress?.({ stage: 'download', bytes: 10, totalBytes: 100 });
+        await new Promise<void>((resolve) => (release = resolve));
+        throw new ImportError('internal', 'Остановлен тестом');
+      },
+    });
+    const runId = service.start('manual');
+    expect(service.getRun(runId)?.progress).toEqual({
+      stage: 'download',
+      bytes: 10,
+      totalBytes: 100,
+    });
+    release();
+    await service.whenIdle();
+    expect(service.getRun(runId)).toMatchObject({ status: 'failed', progress: null });
   });
 
   it('неизвестный запуск — 404', async () => {
