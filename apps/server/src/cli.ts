@@ -7,7 +7,7 @@
 import { parseArgs } from 'node:util';
 import { PASSWORD_MIN_LENGTH, WEEKDAY_NAMES } from '@webpricer/shared';
 import { AuthStore } from './auth/auth-store.ts';
-import { promptHidden } from './cli/prompt.ts';
+import { PromptCancelledError, promptHidden } from './cli/prompt.ts';
 import { loadConfig } from './config.ts';
 import { openAppDb } from './db/app-db.ts';
 import { ImportError } from './import/import-errors.ts';
@@ -21,7 +21,7 @@ const HELP = `Использование: webpricer <команда> [парам
 Команды:
   import              Скачать файл по настройкам импорта и загрузить данные
   import --file <п>   Загрузить данные из локального файла (без скачивания)
-  password            Сменить пароль входа (спросит текущий, новый и подтверждение)
+  password            Сменить пароль входа (спросит текущий пароль, затем новый)
   password --reset    Задать пароль входа без текущего (если он утерян)
   schedule            Показать расписание импорта и время следующего запуска
   help                Показать эту справку
@@ -108,30 +108,73 @@ async function passwordCommand(args: string[]): Promise<number> {
   const appDb = openAppDb(paths.appDb);
   try {
     const auth = new AuthStore(appDb, { sessionTtlMs: config.sessionTtlMs });
-    if (!values.reset && auth.hasPassword()) {
-      const current = await promptHidden('Введите текущий пароль: ');
-      if (!(await auth.verifyPassword(current))) {
-        console.error('Неверный текущий пароль! Если пароль утерян, используйте --reset.');
-        return 1;
-      }
-    }
-    const password = await promptHidden('Введите новый пароль: ');
-    const confirmation = await promptHidden('Подтвердите новый пароль: ');
-    if (password !== confirmation) {
-      console.error('Пароли не совпадают!');
+    const askCurrent = !values.reset && auth.hasPassword();
+
+    console.log(
+      askCurrent ? 'Смена пароля для входа в WebPricer.' : 'Новый пароль для входа в WebPricer.',
+    );
+    console.log(
+      askCurrent
+        ? `Сначала введите текущий пароль, затем новый (не короче ${PASSWORD_MIN_LENGTH} символов).`
+        : `Текущий пароль не нужен. Придумайте новый (не короче ${PASSWORD_MIN_LENGTH} символов).`,
+    );
+    console.log('Вводимые символы показываются звёздочками. Отменить — Ctrl+C.\n');
+
+    if (askCurrent && !(await askCurrentPassword(auth))) {
+      console.error(
+        '\nПароль не изменён: текущий пароль введён неверно.\n' +
+          'Если вы его не помните, запустите эту же команду с параметром --reset.',
+      );
       return 1;
     }
-    if (password.length < PASSWORD_MIN_LENGTH) {
-      console.error(`Пароль должен быть не короче ${PASSWORD_MIN_LENGTH} символов.`);
+    const password = await askNewPassword();
+    if (password === null) {
+      console.error('\nПароль не изменён: слишком много неудачных попыток.');
       return 1;
     }
     await auth.setPassword(password);
     auth.deleteAllSessions();
-    console.log('Пароль успешно обновлён. Все пользователи должны войти заново.');
+    console.log('\nГотово: пароль изменён. Все, кто был в приложении, должны войти заново.');
     return 0;
+  } catch (error) {
+    if (error instanceof PromptCancelledError) {
+      console.error('\nОтменено, пароль не изменён.');
+      return 130;
+    }
+    throw error;
   } finally {
     appDb.close();
   }
+}
+
+const PASSWORD_ATTEMPTS = 3;
+
+async function askCurrentPassword(auth: AuthStore): Promise<boolean> {
+  for (let attempt = 1; attempt <= PASSWORD_ATTEMPTS; attempt++) {
+    if (await auth.verifyPassword(await promptHidden('Текущий пароль: '))) return true;
+    if (attempt < PASSWORD_ATTEMPTS) console.error('Неверный пароль, попробуйте ещё раз.');
+  }
+  return false;
+}
+
+/** Новый пароль с повтором; `null` — все попытки неудачные. */
+async function askNewPassword(): Promise<string | null> {
+  for (let attempt = 1; attempt <= PASSWORD_ATTEMPTS; attempt++) {
+    const retry = attempt < PASSWORD_ATTEMPTS ? ' Попробуйте ещё раз.' : '';
+    const password = await promptHidden('Новый пароль: ');
+    if (password.length < PASSWORD_MIN_LENGTH) {
+      console.error(
+        `Слишком короткий: ${password.length} из ${PASSWORD_MIN_LENGTH} символов.${retry}`,
+      );
+      continue;
+    }
+    if ((await promptHidden('Повторите новый пароль: ')) !== password) {
+      console.error(`Пароли не совпадают.${retry}`);
+      continue;
+    }
+    return password;
+  }
+  return null;
 }
 
 function scheduleCommand(): number {

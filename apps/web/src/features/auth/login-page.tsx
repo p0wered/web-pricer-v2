@@ -63,7 +63,12 @@ export function LoginPage() {
               />
             )}
           </Field>
-          <Button type="submit" variant="primary" className="h-10" disabled={login.isPending || !password}>
+          <Button
+            type="submit"
+            variant="primary"
+            className="h-10"
+            disabled={login.isPending || !password}
+          >
             {login.isPending ? 'Вход…' : 'Войти'}
           </Button>
         </form>

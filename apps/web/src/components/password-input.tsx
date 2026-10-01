@@ -1,11 +1,4 @@
-import {
-  forwardRef,
-  type InputHTMLAttributes,
-  type Ref,
-  useId,
-  useRef,
-  useState,
-} from 'react';
+import { forwardRef, type InputHTMLAttributes, type Ref, useId, useRef, useState } from 'react';
 import { TextInput } from './input.tsx';
 import { cx } from './ui.tsx';
 
