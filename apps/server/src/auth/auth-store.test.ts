@@ -66,28 +66,52 @@ describe('LoginLimiter', () => {
   it('после 5 неудач блокирует на минуту, успешный вход сбрасывает счётчик', () => {
     const limiter = new LoginLimiter();
     const t0 = 1_000_000;
-    for (let i = 0; i < 4; i++) limiter.recordFailure('1.2.3.4', t0);
-    expect(limiter.retryAfterSeconds('1.2.3.4', t0)).toBe(0);
-    limiter.recordFailure('1.2.3.4', t0);
-    expect(limiter.retryAfterSeconds('1.2.3.4', t0 + 15_000)).toBe(45);
-    expect(limiter.retryAfterSeconds('5.6.7.8', t0)).toBe(0); // другой IP
-    expect(limiter.retryAfterSeconds('1.2.3.4', t0 + 60_000)).toBe(0); // окно прошло
+    for (let i = 0; i < 5; i++) expect(limiter.acquire('1.2.3.4', t0)).toBe(0);
+    expect(limiter.acquire('1.2.3.4', t0 + 15_000)).toBe(45);
+    expect(limiter.acquire('5.6.7.8', t0)).toBe(0); // другой IP
+    expect(limiter.acquire('1.2.3.4', t0 + 60_000)).toBe(0); // окно прошло
 
-    for (let i = 0; i < 4; i++) limiter.recordFailure('1.2.3.4', t0);
-    limiter.reset('1.2.3.4');
-    limiter.recordFailure('1.2.3.4', t0);
-    expect(limiter.retryAfterSeconds('1.2.3.4', t0)).toBe(0);
+    const t1 = t0 + 60_000;
+    for (let i = 0; i < 3; i++) limiter.acquire('1.2.3.4', t1);
+    limiter.succeeded('1.2.3.4', t1);
+    for (let i = 0; i < 5; i++) expect(limiter.acquire('1.2.3.4', t1)).toBe(0);
+  });
+
+  it('попытка учитывается до проверки пароля: параллельные запросы не проходят сверх лимита', () => {
+    const limiter = new LoginLimiter();
+    const t0 = 1_000_000;
+    // Ни одна из попыток ещё не завершилась, а шестая уже отклонена.
+    const results = Array.from({ length: 10 }, () => limiter.acquire('1.2.3.4', t0));
+    expect(results.filter((wait) => wait === 0)).toHaveLength(5);
+  });
+
+  it('не больше 20 неудач в минуту со всех IP вместе', () => {
+    const limiter = new LoginLimiter();
+    const t0 = 1_000_000;
+    for (let i = 0; i < 20; i++) expect(limiter.acquire(`10.0.0.${i}`, t0)).toBe(0);
+    expect(limiter.acquire('10.0.1.1', t0 + 10_000)).toBe(50); // новый IP — всё равно ждать
+    expect(limiter.acquire('10.0.1.1', t0 + 60_000)).toBe(0);
+  });
+
+  it('успешный вход не считается неудачей в общем лимите', () => {
+    const limiter = new LoginLimiter();
+    const t0 = 1_000_000;
+    for (let i = 0; i < 20; i++) {
+      expect(limiter.acquire(`10.0.0.${i}`, t0)).toBe(0);
+      limiter.succeeded(`10.0.0.${i}`, t0);
+    }
+    expect(limiter.acquire('10.0.1.1', t0)).toBe(0);
   });
 
   it('не копит в памяти IP, у которых окно прошло', () => {
-    const limiter = new LoginLimiter();
+    const limiter = new LoginLimiter({ maxGlobalAttempts: Infinity });
     const t0 = 1_000_000;
-    for (let i = 0; i < 1000; i++) limiter.recordFailure(`10.0.${i >> 8}.${i & 255}`, t0);
-    limiter.recordFailure('1.2.3.4', t0 + 30_000);
+    for (let i = 0; i < 1000; i++) limiter.acquire(`10.0.${i >> 8}.${i & 255}`, t0);
+    limiter.acquire('1.2.3.4', t0 + 30_000);
     expect(limiter.size).toBe(1001);
 
-    limiter.recordFailure('5.6.7.8', t0 + 60_000);
+    limiter.acquire('5.6.7.8', t0 + 60_000);
     expect(limiter.size).toBe(2); // 1.2.3.4 (окно ещё идёт) и 5.6.7.8
-    expect(limiter.retryAfterSeconds('1.2.3.4', t0 + 60_000)).toBe(0);
+    expect(limiter.acquire('1.2.3.4', t0 + 60_000)).toBe(0);
   });
 });

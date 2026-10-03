@@ -60,26 +60,25 @@ export function registerAuthRoutes(api: FastifyInstance, options: AuthRouteOptio
   });
 
   api.post('/auth/login', async (request, reply) => {
-    const retryAfter = limiter.retryAfterSeconds(request.ip);
-    if (retryAfter > 0) {
-      return reply
-        .code(429)
-        .header('Retry-After', String(retryAfter))
-        .send({ error: `Слишком много попыток входа. Попробуйте через ${retryAfter} секунд.` });
-    }
     const parsed = loginRequestSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply
         .code(422)
         .send({ error: 'Проверьте поля формы.', fields: fieldErrors(parsed.error) });
     }
+    const retryAfter = limiter.acquire(request.ip);
+    if (retryAfter > 0) {
+      return reply
+        .code(429)
+        .header('Retry-After', String(retryAfter))
+        .send({ error: `Слишком много попыток входа. Попробуйте через ${retryAfter} секунд.` });
+    }
     if (!(await auth.verifyPassword(parsed.data.password))) {
-      limiter.recordFailure(request.ip);
       return reply
         .code(422)
         .send({ error: 'Неверный пароль', fields: { password: 'Неверный пароль' } });
     }
-    limiter.reset(request.ip);
+    limiter.succeeded(request.ip);
     auth.deleteExpiredSessions();
     setSessionCookie(reply, request, auth.createSession(), options);
     return reply.code(204).send();

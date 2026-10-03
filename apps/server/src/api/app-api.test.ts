@@ -148,6 +148,71 @@ describe('вход и защита API', () => {
     );
   });
 
+  /** Вход с заданного адреса соединения (прокси или сам клиент). */
+  async function loginFrom(remoteAddress: string, headers: Record<string, string> = {}) {
+    return app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      remoteAddress,
+      headers: { ...csrf, ...headers },
+      payload: { password: 'не тот' },
+    });
+  }
+
+  it('клиент из интернета не обходит лимит подменой X-Forwarded-For и X-Forwarded-Proto', async () => {
+    const statuses: number[] = [];
+    for (let i = 0; i < 6; i++) {
+      const response = await loginFrom('198.51.100.7', { 'x-forwarded-for': `10.9.${i}.1` });
+      statuses.push(response.statusCode);
+    }
+    expect(statuses).toEqual([422, 422, 422, 422, 422, 429]);
+
+    const https = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      remoteAddress: '198.51.100.8',
+      headers: { ...csrf, 'x-forwarded-proto': 'https' },
+      payload: { password: PASSWORD },
+    });
+    expect(https.cookies.find((item) => item.name === 'webpricer_session')?.secure).toBeFalsy();
+  });
+
+  it('за прокси из частной сети лимит считается по IP клиента, который дописал прокси', async () => {
+    // nginx с $proxy_add_x_forwarded_for дописывает настоящий IP справа к присланному клиентом.
+    for (let i = 0; i < 5; i++) {
+      const response = await loginFrom('172.17.0.1', {
+        'x-forwarded-for': `10.9.${i}.1, 203.0.113.5`,
+      });
+      expect(response.statusCode).toBe(422);
+    }
+    const blocked = await loginFrom('172.17.0.1', { 'x-forwarded-for': '10.9.9.1, 203.0.113.5' });
+    expect(blocked.statusCode).toBe(429);
+    const other = await loginFrom('172.17.0.1', { 'x-forwarded-for': '203.0.113.6' });
+    expect(other.statusCode).toBe(422);
+  });
+
+  it('не больше 20 неудач в минуту со всех IP вместе', async () => {
+    for (let i = 0; i < 20; i++) {
+      expect((await loginFrom(`198.51.100.${i}`)).statusCode).toBe(422);
+    }
+    const blocked = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      remoteAddress: '198.51.100.200',
+      headers: csrf,
+      payload: { password: PASSWORD },
+    });
+    expect(blocked.statusCode).toBe(429);
+  });
+
+  it('параллельные попытки не проходят сверх лимита', async () => {
+    const responses = await Promise.all(
+      Array.from({ length: 10 }, () => loginFrom('198.51.100.7')),
+    );
+    const statuses = responses.map((response) => response.statusCode).sort();
+    expect(statuses).toEqual([422, 422, 422, 422, 422, 429, 429, 429, 429, 429]);
+  });
+
   it('отклоняет изменяющие запросы без CSRF-заголовка', async () => {
     const response = await app.inject({
       method: 'POST',
