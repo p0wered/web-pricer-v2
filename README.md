@@ -22,18 +22,10 @@
 
 - `SESSION_TTL_MINUTES` - время жизни сессии без активности в минуты.
 
-
-- `TRUST_PROXY` - при true приложение работает за обратным прокси (HTTPS)
-и берёт IP клиента из X-Forwarded-For. При false - если приложение открыто напрямую,
-без прокси.
-
-
 - `COOKIE_SECURE` - флаг secure у cookie сессии. Auto — если запрос пришёл по HTTPS
-(за прокси — по X-Forwarded-Proto), true — всегда, false — никогда.
-
+  (за прокси — по X-Forwarded-Proto), true — всегда, false — никогда.
 
 - `SCHEDULE_TIMEZONE` - часовой пояс расписания импорта.
-
 
 - `LOG_LEVEL` - уровень логов: fatal | error | warn | info | debug | trace | silent
 
@@ -82,6 +74,23 @@ docker compose exec webpricer2 webpricer import
 ```
 
 Данные и настройки хранятся в папке `data/` и при обновлении сохраняются.
+
+### Обратный прокси (HTTPS)
+
+Приложение рассчитано на работу за nginx или другим прокси с HTTPS. В блок `location`,
+который проксирует запросы на порт 9091, добавьте:
+
+```nginx
+proxy_set_header X-Forwarded-For $remote_addr;
+proxy_set_header X-Forwarded-Proto $scheme;
+```
+
+Первая строка нужна для ограничения попыток входа по IP: без неё IP клиента можно подделать.
+Вторая — чтобы cookie входа получала флаг Secure.
+
+Заголовкам `X-Forwarded-*` приложение верит только от прокси с этого же сервера или из
+локальной сети. Если прокси стоит на другом сервере с публичным IP, укажите его адрес в `.env`:
+`TRUST_PROXY=203.0.113.10` (несколько адресов или подсетей — через запятую).
 
 ## Для разработчиков
 
