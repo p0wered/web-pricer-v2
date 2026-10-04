@@ -5,7 +5,7 @@ import { useLogin, useSession } from '../../api/queries.ts';
 import { Button } from '../../components/button.tsx';
 import { PasswordInput } from '../../components/password-input.tsx';
 import { CARD, cx, Field } from '../../components/ui.tsx';
-import { LogIn } from 'lucide-react';
+import { WebPricerMark } from '../../components/webpricer-mark.tsx';
 
 export function LoginPage() {
   const session = useSession();
@@ -36,11 +36,9 @@ export function LoginPage() {
   return (
     <div className="flex min-h-full flex-col">
       <main className="flex flex-1 gap-4 flex-col items-center justify-center px-4 pb-[16vh]">
-        <div className="flex gap-3 items-center">
-          <LogIn className="text-accent"/>
-          <h2 className="text-lg font-semibold">
-            Авторизация
-          </h2>
+        <div className="flex items-center gap-2.5">
+          <WebPricerMark className="size-7 shrink-0" />
+          <h1 className="text-[25px] font-semibold">WebPricer</h1>
         </div>
 
         <form
