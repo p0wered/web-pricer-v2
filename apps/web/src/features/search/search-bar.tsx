@@ -1,5 +1,5 @@
 import { ClipboardPaste, Copy, Scissors, Search, X } from 'lucide-react';
-import { type FormEvent, useRef, useState } from 'react';
+import { type FormEvent, type ReactNode, useRef, useState } from 'react';
 import { Button } from '../../components/button.tsx';
 import { applyLayoutConversion } from '../../lib/keyboard-layout.ts';
 import { readStored, writeStored } from '../../lib/storage.ts';
@@ -13,9 +13,11 @@ interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
+  /** Переключатели вида выдачи — после EN→RU (подсветка года). */
+  actions?: ReactNode;
 }
 
-export function SearchBar({ value, onChange, onSubmit }: SearchBarProps) {
+export function SearchBar({ value, onChange, onSubmit, actions }: SearchBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [convert, setConvert] = useState(() => readStored(LAYOUT_KEY) === 'true');
   const clipboard = clipboardAvailable();
@@ -55,7 +57,8 @@ export function SearchBar({ value, onChange, onSubmit }: SearchBarProps) {
 
   return (
     <form role="search" onSubmit={submit} className="flex min-w-0 flex-1 items-center gap-2">
-      <div className="relative min-w-40 flex-1 lg:max-w-[640px]">
+      {/* На телефоне поле чуть уже, «Найти» — только иконка: так помещаются переключатели. */}
+      <div className="relative min-w-34 flex-1 sm:min-w-40 lg:max-w-[640px]">
         <input
           ref={inputRef}
           type="search"
@@ -88,8 +91,15 @@ export function SearchBar({ value, onChange, onSubmit }: SearchBarProps) {
           </button>
         )}
       </div>
-      <Button size="lg" type="submit" variant="primary" className="px-3" icon={Search}>
-        Найти
+      <Button
+        size="lg"
+        type="submit"
+        variant="primary"
+        className="px-3"
+        icon={Search}
+        aria-label="Найти"
+      >
+        <span className="hidden sm:inline">Найти</span>
       </Button>
       <Button
         size="lg"
@@ -100,6 +110,7 @@ export function SearchBar({ value, onChange, onSubmit }: SearchBarProps) {
       >
         EN→RU
       </Button>
+      {actions}
       <div className="hidden items-center gap-2 sm:flex" role="group" aria-label="Буфер обмена">
         <Button
           size="lg"

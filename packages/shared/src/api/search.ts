@@ -2,7 +2,14 @@ import { z } from 'zod';
 
 /** Таблица выдачи: детали или стоп-лист. */
 export const searchListSchema = z.enum(['main', 'special']);
-export const searchSortSchema = z.enum(['relevance', 'price_asc', 'price_desc']);
+/** Порядок выдачи: по релевантности, по цене или по количеству (по возрастанию / убыванию). */
+export const searchSortSchema = z.enum([
+  'relevance',
+  'price_asc',
+  'price_desc',
+  'qty_asc',
+  'qty_desc',
+]);
 
 export const SEARCH_PAGE_SIZE = 200;
 export const SEARCH_MAX_PAGE_SIZE = 500;

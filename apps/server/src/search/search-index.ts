@@ -60,6 +60,7 @@ export interface IndexItem {
   /** Позиция листа в книге: порядок групп стоп-листа. */
   sheetOrder: number;
   price: number | null;
+  quantity?: number | null;
 }
 
 export interface SearchIndexData {
@@ -74,6 +75,8 @@ export interface SearchIndexData {
   sheetOrders: Uint16Array;
   /** NaN — цены нет. */
   prices: Float64Array;
+  /** NaN — количества нет. Float32: точности хватает для сортировки, памяти вдвое меньше. */
+  quantities: Float32Array;
   /** Место позиции в алфавитном порядке названий и обратное отображение. */
   nameRanks: Uint32Array;
   byNameRank: Uint32Array;
@@ -91,6 +94,7 @@ export function transferList(data: SearchIndexData): ArrayBuffer[] {
     data.kinds,
     data.sheetOrders,
     data.prices,
+    data.quantities,
     data.nameRanks,
     data.byNameRank,
     data.trigramOffsets,
@@ -121,6 +125,7 @@ export class SearchIndexBuilder {
   private readonly kinds: number[] = [];
   private readonly sheetOrders: number[] = [];
   private readonly prices: number[] = [];
+  private readonly quantities: number[] = [];
   private readonly names: string[] = [];
 
   add(item: IndexItem): void {
@@ -129,6 +134,7 @@ export class SearchIndexBuilder {
     this.kinds.push(item.kind === 'special' ? 1 : 0);
     this.sheetOrders.push(item.sheetOrder);
     this.prices.push(item.price ?? Number.NaN);
+    this.quantities.push(item.quantity ?? Number.NaN);
     this.names.push(item.name.toLowerCase());
 
     const normalized = normalizeText(item.name);
@@ -181,6 +187,7 @@ export class SearchIndexBuilder {
       kinds: Uint8Array.from(this.kinds),
       sheetOrders: Uint16Array.from(this.sheetOrders, (order) => Math.min(order, 65535)),
       prices: Float64Array.from(this.prices),
+      quantities: Float32Array.from(this.quantities),
       nameRanks,
       byNameRank,
       trigramOffsets,
@@ -479,13 +486,13 @@ const LENGTH_SLOTS = 256;
 const MAX_SHEET_ORDER = 4000;
 
 export type ResultList = ItemKind;
-export type ResultSort = 'relevance' | 'price_asc' | 'price_desc';
+export type ResultSort = 'relevance' | 'price_asc' | 'price_desc' | 'qty_asc' | 'qty_desc';
 
 /**
  * Упорядоченные id каталога для одной таблицы выдачи.
  * Релевантность: оценка ↓, длина названия ↑, название по алфавиту. В стоп-листе сначала
- * группа (порядок листов в книге). Сортировка по цене: позиции без цены — в конце,
- * при равной цене — по релевантности.
+ * группа (порядок листов в книге). Сортировка по цене или количеству: позиции без значения —
+ * в конце, при равном значении — по релевантности.
  */
 export function orderResults(
   index: SearchIndex,
@@ -493,7 +500,8 @@ export function orderResults(
   list: ResultList,
   sort: ResultSort,
 ): Uint32Array {
-  const { kinds, starts, nameRanks, byNameRank, sheetOrders, prices, ids, count } = index.data;
+  const { kinds, starts, nameRanks, byNameRank, sheetOrders, prices, quantities, ids, count } =
+    index.data;
   const wantKind = list === 'special' ? 1 : 0;
   const total = Math.max(count, 1);
 
@@ -526,7 +534,8 @@ export function orderResults(
     return result;
   }
 
-  const direction = sort === 'price_asc' ? 1 : -1;
+  const values = sort === 'price_asc' || sort === 'price_desc' ? prices : quantities;
+  const direction = sort === 'price_asc' || sort === 'qty_asc' ? 1 : -1;
   const order = Array.from(keys.keys());
   const groupSize = (MAX_SCORE + 1) * LENGTH_SLOTS * total;
   order.sort((a, b) => {
@@ -536,12 +545,12 @@ export function orderResults(
       const groupDiff = Math.floor(keyA / groupSize) - Math.floor(keyB / groupSize);
       if (groupDiff !== 0) return groupDiff;
     }
-    const priceA = prices[itemsOfList[a] ?? 0] ?? Number.NaN;
-    const priceB = prices[itemsOfList[b] ?? 0] ?? Number.NaN;
-    const missingA = Number.isNaN(priceA);
-    const missingB = Number.isNaN(priceB);
+    const valueA = values[itemsOfList[a] ?? 0] ?? Number.NaN;
+    const valueB = values[itemsOfList[b] ?? 0] ?? Number.NaN;
+    const missingA = Number.isNaN(valueA);
+    const missingB = Number.isNaN(valueB);
     if (missingA !== missingB) return missingA ? 1 : -1;
-    if (!missingA && priceA !== priceB) return (priceA - priceB) * direction;
+    if (!missingA && valueA !== valueB) return (valueA - valueB) * direction;
     return keyA - keyB;
   });
   order.forEach((position, i) => (result[i] = ids[itemsOfList[position] ?? 0] ?? 0));

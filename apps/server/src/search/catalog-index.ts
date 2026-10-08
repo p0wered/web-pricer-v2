@@ -14,6 +14,7 @@ interface Row {
   kind: ItemKind;
   sort_order: number;
   price_num: number | null;
+  qty_num: number | null;
 }
 
 export function readCatalogVersion(db: Database.Database): number | null {
@@ -27,7 +28,7 @@ export function buildCatalogIndex(catalogPath: string): BuiltCatalogIndex {
     const builder = new SearchIndexBuilder();
     const rows = db
       .prepare(
-        `SELECT i.id, i.name, s.kind, s.sort_order, i.price_num
+        `SELECT i.id, i.name, s.kind, s.sort_order, i.price_num, i.qty_num
          FROM items i JOIN sheets s ON s.id = i.sheet_id
          ORDER BY i.id`,
       )
@@ -39,6 +40,7 @@ export function buildCatalogIndex(catalogPath: string): BuiltCatalogIndex {
         kind: row.kind,
         sheetOrder: row.sort_order,
         price: row.price_num,
+        quantity: row.qty_num,
       });
     }
     return { version: readCatalogVersion(db), data: builder.build() };

@@ -104,7 +104,7 @@ export function SplitPanes({ left, right }: { left: ReactNode; right: ReactNode 
         onPointerCancel={() => setDragging(false)}
         onDoubleClick={() => commit(DEFAULT_RATIO)}
         onKeyDown={onKeyDown}
-        className="group relative hidden w-3 shrink-0 cursor-col-resize rounded-full outline-none md:block"
+        className="group relative hidden w-2 shrink-0 cursor-col-resize rounded-full outline-none md:block"
       >
         <span
           aria-hidden

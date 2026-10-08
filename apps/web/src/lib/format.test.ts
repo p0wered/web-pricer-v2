@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatRecentDateTime } from './format.ts';
+import { formatPrice, formatRecentDateTime, isYear } from './format.ts';
 
 describe('formatRecentDateTime', () => {
   // 1 октября 2026, 14:00 по Москве (UTC+3).
@@ -15,5 +15,36 @@ describe('formatRecentDateTime', () => {
   it('раньше — датой, год только если другой', () => {
     expect(formatRecentDateTime('2026-09-28T06:04:00Z', now)).toBe('28 сентября в 09:04');
     expect(formatRecentDateTime('2025-12-31T06:04:00Z', now)).toBe('31 декабря 2025 г. в 09:04');
+  });
+});
+
+describe('formatPrice', () => {
+  it('знак рубля — только у распознанного числа', () => {
+    expect(formatPrice('1600', 1600, { rub: true })).toBe('1\u00a0600\u00a0₽');
+    expect(formatPrice('29 $', null, { rub: true })).toBe('29 $');
+    expect(formatPrice('999,99', 999.99)).toBe('999,99');
+  });
+});
+
+describe('isYear', () => {
+  it('узнаёт год в записях колонки «Год»', () => {
+    for (const text of ['2026', '26', '2026г', '2026 г.', '2026,Элекон', ' 26 ']) {
+      expect(isYear(text, 2026)).toBe(true);
+    }
+  });
+
+  it('не путает с датами, диапазонами и другими числами', () => {
+    for (const text of [
+      '12.10.2026',
+      '2025-2026',
+      '2024(2026)',
+      '26шт',
+      '90:26',
+      '2025',
+      '126',
+      null,
+    ]) {
+      expect(isYear(text, 2026)).toBe(false);
+    }
   });
 });

@@ -94,6 +94,13 @@ describe('GET /api/search', () => {
     expect(second.offset).toBe(2);
   });
 
+  it('сортирует по количеству', async () => {
+    const parsed = searchResponseSchema.parse(
+      (await search({ q: 'к', list: 'main', sort: 'qty_desc' })).body,
+    );
+    expect(parsed.items.map((item) => item.quantity)).toEqual(['>1000', '199шт', '10', '3']);
+  });
+
   it('сжимает ответ, если клиент это поддерживает', async () => {
     const response = await app.inject({
       method: 'GET',

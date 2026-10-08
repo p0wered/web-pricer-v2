@@ -6,7 +6,13 @@
 
 /*
  * Токены: нейтральные холодные серые + один синий акцент (действие, фокус, выделение).
- * Красный — только стоп-лист STOP. Цвета поставщиков — приглушённые метки-точки.
+ * Красный — стоп-лист STOP и цены (по просьбе заказчика, для читаемости).
+ *
+ * Поставщики: 8 оттенков, у каждого — точка (--sup-N), фон строки (--sup-N-bg) и фон при
+ * наведении. Фоны подобраны в OKLCH с одинаковой светлотой: соседние цвета различимы
+ * (ΔE ≥ 3), красно-розовых нет — они остаются за STOP; контраст текста и цены ≥ 4.5:1.
+ * В тёмной теме насыщенность ниже (C 0.028), а оттенки разнесены равномернее — чтобы фоны не
+ * выглядели кислотными и при этом различались (ΔE ≥ 1.7).
  */
 :root {
   color-scheme: light;
@@ -34,20 +40,33 @@
   --stop-bg-hover: #fdeceb;
   --shadow-popover: 0 8px 24px -6px rgb(24 24 27 / 0.14), 0 2px 6px -2px rgb(24 24 27 / 0.08);
   --shadow-card: 0 1px 12px rgb(24 24 27 / 0.05), 0 1px 3px -1px rgb(24 24 27 / 0.04);
-  --row-tint-strength: 7%;
+  --price: #c8102e;
+  --row-divider: rgb(24 24 27 / 0.07);
 
-  --sup-0: #2f6fd8;
-  --sup-1: #0e9384;
-  --sup-2: #c4320a;
-  --sup-3: #7a5af8;
-  --sup-4: #ca8504;
-  --sup-5: #dd2590;
-  --sup-6: #4e8a2b;
-  --sup-7: #0086c9;
-  --sup-8: #9e5c2f;
-  --sup-9: #5d6b98;
-  --sup-10: #c11574;
-  --sup-11: #15803d;
+  --sup-0: #bb6802;
+  --sup-0-bg: #ffe6d3;
+  --sup-0-bg-hover: #ffdbc0;
+  --sup-1: #9a7d03;
+  --sup-1-bg: #f9ebbe;
+  --sup-1-bg-hover: #f4e2ae;
+  --sup-2: #61911c;
+  --sup-2-bg: #def4ca;
+  --sup-2-bg-hover: #d4edbc;
+  --sup-3: #01976d;
+  --sup-3-bg: #c7f9e1;
+  --sup-3-bg-hover: #b8f2d7;
+  --sup-4: #009298;
+  --sup-4-bg: #bcf8fb;
+  --sup-4-bg-hover: #abf2f5;
+  --sup-5: #008db7;
+  --sup-5-bg: #d3f1fe;
+  --sup-5-bg-hover: #c0ebff;
+  --sup-6: #7970d5;
+  --sup-6-bg: #e9e9ff;
+  --sup-6-bg-hover: #dfe0ff;
+  --sup-7: #af5bad;
+  --sup-7-bg: #ffe0fd;
+  --sup-7-bg-hover: #fdd3fb;
 }
 
 .dark {
@@ -76,20 +95,33 @@
   --stop-bg-hover: #2b1917;
   --shadow-popover: 0 12px 32px -8px rgb(0 0 0 / 0.6), 0 2px 8px -2px rgb(0 0 0 / 0.5);
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
-  --row-tint-strength: 11%;
+  --price: #ff7b72;
+  --row-divider: rgb(255 255 255 / 0.07);
 
-  --sup-0: #6d9cf3;
-  --sup-1: #2ed3b7;
-  --sup-2: #f38744;
-  --sup-3: #a48afb;
-  --sup-4: #f5c542;
-  --sup-5: #f670c7;
-  --sup-6: #86cb5c;
-  --sup-7: #36bffa;
-  --sup-8: #d69866;
-  --sup-9: #98a2c9;
-  --sup-10: #ee46bc;
-  --sup-11: #4ade80;
+  --sup-0: #e0a07d;
+  --sup-0-bg: #32221a;
+  --sup-0-bg-hover: #3d2a1f;
+  --sup-1: #c6b06d;
+  --sup-1-bg: #2b2616;
+  --sup-1-bg-hover: #352f1b;
+  --sup-2: #93c089;
+  --sup-2-bg: #1f2a1d;
+  --sup-2-bg-hover: #263323;
+  --sup-3: #6bc4b3;
+  --sup-3-bg: #162b27;
+  --sup-3-bg-hover: #1a3530;
+  --sup-4: #6abfd9;
+  --sup-4-bg: #162a30;
+  --sup-4-bg-hover: #1a333b;
+  --sup-5: #92b2eb;
+  --sup-5-bg: #1f2734;
+  --sup-5-bg-hover: #262f40;
+  --sup-6: #baa4e2;
+  --sup-6-bg: #282332;
+  --sup-6-bg-hover: #322b3e;
+  --sup-7: #d59cc8;
+  --sup-7-bg: #2f212c;
+  --sup-7-bg-hover: #3a2936;
 }
 
 @theme inline {
@@ -114,6 +146,8 @@
   --color-stop-fg: var(--stop-fg);
   --color-stop-bg: var(--stop-bg);
   --color-stop-bg-hover: var(--stop-bg-hover);
+  --color-price: var(--price);
+  --color-row-divider: var(--row-divider);
   --shadow-popover: var(--shadow-popover);
   --shadow-card: var(--shadow-card);
   --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -170,9 +204,38 @@
   }
 }
 
-/* Строка выдачи при наведении — приглушённый цвет её поставщика (--row-tint задаёт таблица). */
+/* Строка выдачи — фон цвета её поставщика (--row-bg и --row-bg-hover задаёт таблица). */
+.supplier-row {
+  background: var(--row-bg);
+}
+
 .supplier-row:hover {
-  background: color-mix(in srgb, var(--row-tint) var(--row-tint-strength), var(--surface));
+  background: var(--row-bg-hover);
+}
+
+/*
+ * Скруглённые верхние углы строк под шапкой таблицы: уголки цвета карточки поверх строк,
+ * радиус — как у плашки шапки (rounded-lg). Работают и при прокрутке, когда первая строка
+ * уже ушла под шапку.
+ */
+.table-head::before,
+.table-head::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  width: 0.5rem;
+  height: 0.5rem;
+  pointer-events: none;
+}
+
+.table-head::before {
+  left: 0;
+  background: radial-gradient(circle at 100% 100%, transparent 0.5rem, var(--surface) 0.5rem);
+}
+
+.table-head::after {
+  right: 0;
+  background: radial-gradient(circle at 0 100%, transparent 0.5rem, var(--surface) 0.5rem);
 }
 
 /* Полоса «идёт загрузка» в заголовке панели: появляется только если ответ задерживается. */

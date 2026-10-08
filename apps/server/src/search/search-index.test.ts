@@ -126,10 +126,10 @@ describe('ранжирование', () => {
 
 describe('таблицы выдачи и сортировка', () => {
   const items: (Partial<IndexItem> & { name: string })[] = [
-    { name: 'КТ315 деталь', price: 50 },
+    { name: 'КТ315 деталь', price: 50, quantity: 3 },
     { name: 'КТ315 стоп Spam', kind: 'special', sheetOrder: 5 },
     { name: 'КТ315 стоп STOP', kind: 'special', sheetOrder: 2 },
-    { name: 'КТ315 без цены' },
+    { name: 'КТ315 без цены', quantity: 1000 },
     { name: 'КТ315 дешёвая', price: 10 },
   ];
   const index = buildIndex(items);
@@ -142,5 +142,10 @@ describe('таблицы выдачи и сортировка', () => {
   it('сортирует по цене, позиции без цены — в конце', () => {
     expect(search(index, 'кт315', 'main', 'price_asc')).toEqual([5, 1, 4]);
     expect(search(index, 'кт315', 'main', 'price_desc')).toEqual([1, 5, 4]);
+  });
+
+  it('сортирует по количеству, позиции без количества — в конце', () => {
+    expect(search(index, 'кт315', 'main', 'qty_desc')).toEqual([4, 1, 5]);
+    expect(search(index, 'кт315', 'main', 'qty_asc')).toEqual([1, 4, 5]);
   });
 });

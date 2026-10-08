@@ -6,7 +6,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { type CSSProperties, type ReactNode, useEffect, useMemo, useRef } from 'react';
 import { Button } from '../../components/button.tsx';
 import { cx } from '../../components/ui.tsx';
-import { supplierColor } from '../../lib/format.ts';
+import { supplierRowColors } from '../../lib/format.ts';
 
 export interface Column {
   id: string;
@@ -35,6 +35,7 @@ interface ResultTableProps {
 }
 
 const ROW_HEIGHT = 32;
+
 const PREFETCH_ROWS = 40;
 
 export function ResultTable({
@@ -101,10 +102,14 @@ export function ResultTable({
         query.isPlaceholderData && 'opacity-60 transition-opacity',
       )}
     >
-      {/* Шапка — скруглённая серая плашка; подложка цвета карточки прячет строки под ней. */}
+      {/*
+        Шапка — скруглённая серая плашка; подложка цвета карточки прячет строки под ней, в том
+        числе в зазоре под плашкой. Уголки под подложкой (.table-head) скругляют верх строк при
+        любой прокрутке.
+      */}
       <div
         role="rowgroup"
-        className="sticky top-0 z-10 bg-surface mb-1"
+        className="table-head sticky top-0 z-10 bg-surface pb-1"
         style={{ minWidth: grid.minWidth }}
       >
         <div
@@ -130,7 +135,7 @@ export function ResultTable({
       </div>
 
       {message ? (
-        <div className="flex h-[calc(100%-2rem)] min-h-40 items-center justify-center px-6 text-center text-[13px] text-subtle">
+        <div className="flex h-[calc(100%-2.25rem)] min-h-40 items-center justify-center px-6 text-center text-[13px] text-subtle">
           {message}
         </div>
       ) : (
@@ -142,26 +147,32 @@ export function ResultTable({
           {virtualRows.map((row) => {
             const item = items[row.index];
             if (!item) return null;
+            const colors = supplierRowColors(item.supplier);
             return (
               <div
                 key={item.id}
                 role="row"
                 aria-rowindex={row.index + 2}
                 className={cx(
-                  'absolute inset-x-0 top-0 grid items-center rounded-lg text-[13px]',
+                  'absolute inset-x-0 top-0 grid items-center text-[13px]',
+                  row.index === 0 && 'rounded-t-lg',
+                  row.index === items.length - 1 && 'rounded-b-lg',
                   // Линия между строками с отступами по краям — не упирается в рамку блока.
-                  row.index < items.length - 1 &&
-                    'after:absolute after:inset-x-2.5 after:bottom-0 after:h-px',
+                  // ::after всегда absolute: иначе он становится вторым рядом grid-строки и
+                  // сдвигает текст вверх; у последней строки линия просто скрыта.
+                  'after:absolute after:inset-x-2.5 after:bottom-0 after:h-px',
+                  row.index === items.length - 1 && 'after:hidden',
                   item.isStop
                     ? 'bg-stop-bg text-stop-fg after:bg-stop-fg/10 hover:bg-stop-bg-hover'
-                    : 'supplier-row text-fg after:bg-line',
+                    : 'supplier-row text-fg after:bg-row-divider',
                 )}
                 style={
                   {
                     ...grid,
                     height: ROW_HEIGHT,
                     transform: `translateY(${row.start}px)`,
-                    '--row-tint': supplierColor(item.supplier),
+                    '--row-bg': colors.background,
+                    '--row-bg-hover': colors.hover,
                   } as CSSProperties
                 }
               >
