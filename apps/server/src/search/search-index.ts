@@ -233,25 +233,54 @@ function buildTrigrams(text: Uint8Array, starts: Uint32Array, count: number) {
 
 // ---------------------------------------------------------------------------
 // Запрос
+//
+// Запрос делится на слова по пробелам; слова ищутся в названии в любом порядке. Внутри слова
+// работают операторы (пожелания заказчика, docs/customer-feedback-2026-10.md):
+//   ?  — ровно один любой символ: «рс?тв» → РС4ТВ, РС-7ТВ, но не РСТВ;
+//   _  — любые символы, в том числе ни одного. Части слова между «_» идут в названии по порядку:
+//        «с2-33_1_10» → «С2-33Н 1 Вт 10 кОм», «С2-33-1-10». Число в части после «_» ищется
+//        целиком: «1» находит «1Вт», «1 кОм», «-1-», но не 15, 1.2, 0.125;
+//   ^  — в начале части: совпадение начинается с начала слова в названии («^кнр» ≠ 2КНР);
+//   $  — в конце части: совпадение заканчивается концом слова («140уд6$» ≠ 140УД601, но находит
+//        «140УД6 (87г)»).
+// В названиях эти символы — разделители, поэтому как операторы в запросе ничего не теряют.
 
-/** Слово запроса после нормализации. */
-export interface QueryTerm {
-  /** Сжатая форма: без разделителей, в байтах индекса. */
+/** Байт `?` в части запроса: совпадает с любым символом названия (в тексте индекса нулей нет). */
+const WILDCARD = 0x00;
+const DOT = 0x2e;
+
+/** Часть слова запроса (между `_`): ищется в названии сплошным куском. */
+export interface QueryPart {
+  /** Сжатая форма: без разделителей, в байтах индекса; `?` — `WILDCARD`. */
   bytes: Uint8Array;
   /** `separatorBefore[k]` — в запросе перед k-м символом сжатой формы был разделитель. */
   separatorBefore: Uint8Array;
+  /** Есть `?` — без них сравнение идёт быстрым путём, как до операторов. */
+  hasWildcard: boolean;
   /** Число в начале: перед совпадением не должно быть цифры или точки («15пф» ≠ «115пф»). */
   startsWithDigit: boolean;
   /**
-   * Слово — значение с единицей («10к», «33мкф», «16вт»): после совпадения не должна идти
+   * Часть — значение с единицей («10к», «33мкф», «16вт»): после совпадения не должна идти
    * буква («10к» ≠ «10кв»).
    */
   valueWithUnit: boolean;
+  /** Число после `_`: ищется целиком — после совпадения число не продолжается («1» ≠ «15», «1.2»). */
+  wholeNumber: boolean;
+  /** `^` — совпадение начинается с начала слова в названии. */
+  atWordStart: boolean;
+  /** `$` — совпадение заканчивается концом слова в названии. */
+  atWordEnd: boolean;
+}
+
+/** Слово запроса: части по порядку; без `_` — одна часть. */
+export interface QueryTerm {
+  parts: QueryPart[];
 }
 
 // Единицы и множители, после которых буква означает уже другое значение. Одиночные «в», «а»,
 // «м», «г» сюда не входят: в названиях это часто буква типа («К52-1В», «К10-17А»).
 const VALUE_WITH_UNIT = /^\d+(?:\.\d+)?(?:к|мкф|пф|нф|вт|ом|гц|кгц|мгц|кв|мв|ма|мка)$/;
+const NUMBER = /^\d+(?:\.\d+)?$/;
 
 // Единица, написанная отдельным словом после числа: «33 мкФ», «1,5 кОм», «50 V».
 const UNIT_WORD =
@@ -272,35 +301,100 @@ function queryWords(query: string): string[] {
   return words;
 }
 
+/** Символ, который нормализация превращает в разделитель (дефис, скобка, запятая…). */
+const isSeparatorChar = (char: string | undefined) =>
+  char !== undefined && normalizeText(char) === '';
+
+/** Часть слова между `_`; `null`, если в ней нет ни одного символа. */
+function parsePart(raw: string, afterGap: boolean): QueryPart | null {
+  const atWordStart = raw.startsWith('^');
+  const atWordEnd = raw.endsWith('$');
+  // `^` и `$` не на краю части смысла не имеют — там они просто разделители.
+  const text = raw.replace(/^\^+/, '').replace(/\$+$/, '').replace(/[\^$]/g, ' ');
+
+  // Куски между `?` нормализуются по отдельности, между ними — WILDCARD.
+  const bytes: number[] = [];
+  const separatorBefore: number[] = [];
+  let separator = false;
+  const push = (byte: number) => {
+    separatorBefore.push(separator && bytes.length > 0 ? 1 : 0);
+    separator = false;
+    bytes.push(byte);
+  };
+  text.split('?').forEach((segment, s) => {
+    if (s > 0) push(WILDCARD);
+    if (isSeparatorChar(segment[0])) separator = true;
+    const normalized = normalizeText(segment);
+    for (let i = 0; i < normalized.length; i++) {
+      const byte = encodeChar(normalized.charCodeAt(i));
+      if (byte < 0) separator = true;
+      else push(byte);
+    }
+    if (isSeparatorChar(segment.at(-1))) separator = true;
+  });
+  if (bytes.length === 0) return null;
+
+  const hasWildcard = bytes.includes(WILDCARD);
+  const normalized = hasWildcard ? '' : normalizeText(text);
+  const singleToken = !hasWildcard && !normalized.includes(' ');
+  return {
+    bytes: Uint8Array.from(bytes),
+    separatorBefore: Uint8Array.from(separatorBefore),
+    hasWildcard,
+    startsWithDigit: isDigit(bytes[0] ?? 0),
+    valueWithUnit: singleToken && VALUE_WITH_UNIT.test(normalized),
+    wholeNumber: afterGap && singleToken && NUMBER.test(normalized),
+    atWordStart,
+    atWordEnd,
+  };
+}
+
 export function parseQuery(query: string): QueryTerm[] {
   const terms: QueryTerm[] = [];
   for (const word of queryWords(query)) {
-    const normalized = normalizeText(word);
-    if (!normalized) continue;
-    const compact = normalized.replace(/ /g, '');
-    const bytes = new Uint8Array(compact.length);
-    const separatorBefore = new Uint8Array(compact.length);
-    for (let i = 0, k = 0; i < normalized.length; i++) {
-      const byte = encodeChar(normalized.charCodeAt(i));
-      if (byte < 0) {
-        separatorBefore[k] = 1;
-        continue;
-      }
-      bytes[k++] = byte;
-    }
-    terms.push({
-      bytes,
-      separatorBefore,
-      startsWithDigit: /^\d/.test(compact),
-      valueWithUnit: !normalized.includes(' ') && VALUE_WITH_UNIT.test(compact),
+    const parts: QueryPart[] = [];
+    word.split('_').forEach((raw, i) => {
+      const part = parsePart(raw, i > 0);
+      if (part) parts.push(part);
     });
+    // Слово из одних операторов («?», «^_») нашло бы весь каталог — пропускаем.
+    if (parts.some((part) => part.bytes.some((byte) => byte !== WILDCARD))) terms.push({ parts });
   }
   return terms;
 }
 
-/** Ключ кэша: одинаковые после нормализации запросы дают одну выдачу. */
+function partKey(part: QueryPart): string {
+  let key = part.wholeNumber ? '#' : '';
+  if (part.atWordStart) key += '^';
+  part.bytes.forEach((byte, k) => {
+    if (part.separatorBefore[k]) key += '-';
+    key += byte === WILDCARD ? '?' : String.fromCharCode(byte);
+  });
+  return part.atWordEnd ? `${key}$` : key;
+}
+
+/**
+ * Ключ кэша: одинаковые после нормализации запросы дают одну выдачу. Разделители внутри слова
+ * входят в ключ — они влияют на склейку токенов («мп-0» находит больше, чем «мп0»).
+ */
 export function queryKey(terms: QueryTerm[]): string {
-  return terms.map((term) => Buffer.from(term.bytes).toString('latin1')).join(' ');
+  return terms.map((term) => term.parts.map(partKey).join('_')).join(' ');
+}
+
+/** Самый длинный кусок запроса без `?` — для поиска перебором. */
+function longestLiteral(terms: QueryTerm[]): Uint8Array {
+  let best: Uint8Array = new Uint8Array(0);
+  for (const term of terms) {
+    for (const { bytes } of term.parts) {
+      let runStart = 0;
+      for (let i = 0; i <= bytes.length; i++) {
+        if (i < bytes.length && bytes[i] !== WILDCARD) continue;
+        if (i - runStart > best.length) best = bytes.subarray(runStart, i);
+        runStart = i + 1;
+      }
+    }
+  }
+  return best;
 }
 
 // ---------------------------------------------------------------------------
@@ -312,8 +406,13 @@ export interface MatchResult {
   scores: Uint16Array;
 }
 
-const isDigit = (byte: number) => byte >= 0x30 && byte <= 0x39;
-const isLetter = (byte: number) => (byte >= 0x61 && byte <= 0x7a) || byte >= CYRILLIC_BASE_BYTE;
+function isDigit(byte: number): boolean {
+  return byte >= 0x30 && byte <= 0x39;
+}
+
+function isLetter(byte: number): boolean {
+  return (byte >= 0x61 && byte <= 0x7a) || byte >= CYRILLIC_BASE_BYTE;
+}
 
 export class SearchIndex {
   readonly data: SearchIndexData;
@@ -343,48 +442,105 @@ export class SearchIndex {
     return ((this.data.tokenStarts[position >> 3] ?? 0) & (1 << (position & 7))) !== 0;
   }
 
-  /** Первое вхождение слова в позицию, удовлетворяющее правилам границ; −1, если нет. */
-  private findTerm(term: QueryTerm, start: number, end: number): number {
+  /**
+   * Первое вхождение части в позицию (не раньше `from`), удовлетворяющее правилам границ;
+   * −1, если нет. `start`/`end` — границы позиции в тексте.
+   *
+   * Цикл по байтам — самое горячее место поиска, поэтому для частей без `?` он отдельный и такой
+   * же простой, как до операторов; правила границ проверяются только на совпавших байтах.
+   */
+  private findPart(part: QueryPart, from: number, start: number, end: number): number {
     const { text } = this.data;
-    const bytes = term.bytes;
+    const { bytes } = part;
     const length = bytes.length;
     const first = bytes[0];
-    outer: for (let p = start; p + length <= end; p++) {
-      if (text[p] !== first) continue;
-      for (let k = 1; k < length; k++) if (text[p + k] !== bytes[k]) continue outer;
-
-      // Разделитель в названии внутри совпадения, которого не было в запросе, допустим только
-      // если совпадение начинается с начала токена: «кт315» ↔ «КТ 315», но «мп0» ≠ «8МП 0.125».
-      const startsToken = p === start || this.isTokenStart(p);
-      if (!startsToken) {
-        for (let k = 1; k < length; k++) {
-          if (this.isTokenStart(p + k) && term.separatorBefore[k] === 0) continue outer;
-        }
+    if (!part.hasWildcard) {
+      outer: for (let p = from; p + length <= end; p++) {
+        if (text[p] !== first) continue;
+        for (let k = 1; k < length; k++) if (text[p + k] !== bytes[k]) continue outer;
+        if (this.fitsBounds(part, p, start, end)) return p;
       }
-
-      if (term.startsWithDigit && p > start && !this.isTokenStart(p)) {
-        const before = text[p - 1] ?? 0;
-        if (isDigit(before) || before === 0x2e) continue;
+      return -1;
+    }
+    outer: for (let p = from; p + length <= end; p++) {
+      if (first !== WILDCARD && text[p] !== first) continue;
+      for (let k = 1; k < length; k++) {
+        const byte = bytes[k];
+        if (byte !== WILDCARD && text[p + k] !== byte) continue outer;
       }
-      const after = p + length;
-      if (term.valueWithUnit && after < end && !this.isTokenStart(after)) {
-        if (isLetter(text[after] ?? 0)) continue;
-      }
-      return p;
+      if (this.fitsBounds(part, p, start, end)) return p;
     }
     return -1;
   }
 
-  /** Позиции-кандидаты: пересечение списков по триграммам всех слов длиной от 3 символов. */
+  /** Правила границ для совпадения части в позиции `p` (байты уже совпали). */
+  private fitsBounds(part: QueryPart, p: number, start: number, end: number): boolean {
+    const { text } = this.data;
+    const length = part.bytes.length;
+    const startsToken = p === start || this.isTokenStart(p);
+    if (part.atWordStart && !startsToken) return false;
+    if (!startsToken) {
+      // Разделитель в названии внутри совпадения, которого не было в запросе, допустим только
+      // если совпадение начинается с начала токена: «кт315» ↔ «КТ 315», но «мп0» ≠ «8МП 0.125».
+      for (let k = 1; k < length; k++) {
+        if (this.isTokenStart(p + k) && part.separatorBefore[k] === 0) return false;
+      }
+      if (part.startsWithDigit) {
+        const before = text[p - 1] ?? 0;
+        if (isDigit(before) || before === DOT) return false;
+      }
+    }
+
+    // Правила конца совпадения есть не у каждой части — проверяем, только если нужно.
+    if (part.atWordEnd || part.valueWithUnit || part.wholeNumber) {
+      const after = p + length;
+      const endsToken = after >= end || this.isTokenStart(after);
+      if (part.atWordEnd && !endsToken) return false;
+      if (!endsToken) {
+        const next = text[after] ?? 0;
+        if (part.valueWithUnit && isLetter(next)) return false;
+        if (part.wholeNumber && (isDigit(next) || next === DOT)) return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Вхождение слова: части по порядку, каждая — первое подходящее вхождение после предыдущей
+   * (для шаблонов с `_` это точный ответ: правила границ зависят только от места самой части).
+   * Возвращает начало первой части, конец последней пишет в `ends[t]`; −1, если слова нет.
+   */
+  private findTerm(term: QueryTerm, start: number, end: number, ends: Int32Array, t: number) {
+    const { parts } = term;
+    let from = start;
+    let first = -1;
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i] as QueryPart;
+      const position = this.findPart(part, from, start, end);
+      if (position < 0) return -1;
+      if (first < 0) first = position;
+      from = position + part.bytes.length;
+    }
+    ends[t] = from;
+    return first;
+  }
+
+  /** Позиции-кандидаты: пересечение списков по триграммам всех кусков запроса без `?`. */
   private candidates(terms: QueryTerm[]): Uint32Array | null {
     const { trigramOffsets, trigramItems } = this.data;
     const slots = new Set<number>();
-    for (const { bytes } of terms) {
-      for (let i = 0; i + 2 < bytes.length; i++) {
-        slots.add(trigramSlot(bytes[i] ?? 0, bytes[i + 1] ?? 0, bytes[i + 2] ?? 0));
+    for (const term of terms) {
+      for (const { bytes } of term.parts) {
+        for (let i = 0; i + 2 < bytes.length; i++) {
+          const a = bytes[i] ?? 0;
+          const b = bytes[i + 1] ?? 0;
+          const c = bytes[i + 2] ?? 0;
+          if (a === WILDCARD || b === WILDCARD || c === WILDCARD) continue;
+          slots.add(trigramSlot(a, b, c));
+        }
       }
     }
-    if (slots.size === 0) return null; // все слова короче 3 символов
+    if (slots.size === 0) return null; // нет кусков от 3 символов
     if (slots.has(-1)) return new Uint32Array(0);
 
     const lists = [...slots]
@@ -420,6 +576,7 @@ export class SearchIndex {
     const items: number[] = [];
     const scores: number[] = [];
     const positions = new Int32Array(terms.length);
+    const ends = new Int32Array(terms.length);
 
     const check = (item: number) => {
       const start = starts[item] ?? 0;
@@ -427,27 +584,36 @@ export class SearchIndex {
       for (let t = 0; t < terms.length; t++) {
         const term = terms[t];
         if (!term) return;
-        const position = this.findTerm(term, start, end);
+        // Слово из одной части (без `_`) — почти все запросы: ищем часть напрямую, без
+        // промежуточного вызова (на широких запросах это заметно по времени).
+        let position: number;
+        const single = term.parts.length === 1 ? term.parts[0] : undefined;
+        if (single) {
+          position = this.findPart(single, start, start, end);
+          ends[t] = position + single.bytes.length;
+        } else {
+          position = this.findTerm(term, start, end, ends, t);
+        }
         if (position < 0) return;
         positions[t] = position;
       }
       items.push(item);
-      scores.push(this.score(terms, positions, start, end));
+      scores.push(this.score(positions, ends, start, end));
     };
 
     if (candidates) {
       for (let i = 0; i < candidates.length; i++) check(candidates[i] ?? 0);
     } else {
-      // Все слова короче 3 символов: ищем самое длинное по всему тексту и проверяем позиции,
-      // в которых оно встретилось.
-      const longest = terms.reduce((a, b) => (b.bytes.length > a.bytes.length ? b : a));
+      // Нет кусков от 3 символов: ищем самый длинный кусок по всему тексту и проверяем позиции,
+      // в которых он встретился.
+      const literal = longestLiteral(terms);
       const text = Buffer.from(
         this.data.text.buffer,
         this.data.text.byteOffset,
         this.data.text.length,
       );
       let last = -1;
-      for (let p = text.indexOf(longest.bytes); p >= 0; p = text.indexOf(longest.bytes, p + 1)) {
+      for (let p = text.indexOf(literal); p >= 0; p = text.indexOf(literal, p + 1)) {
         const item = this.itemAt(p);
         if (item === last) continue;
         last = item;
@@ -458,7 +624,7 @@ export class SearchIndex {
     return { items: Uint32Array.from(items), scores: Uint16Array.from(scores) };
   }
 
-  private score(terms: QueryTerm[], positions: Int32Array, start: number, end: number): number {
+  private score(positions: Int32Array, ends: Int32Array, start: number, end: number): number {
     let score = 0;
     const first = positions[0] ?? 0;
     // Первое слово — обычно семейство детали («к52» в «к52 15пф 33ом»).
@@ -466,17 +632,17 @@ export class SearchIndex {
     else if (this.isTokenStart(first)) score += 400;
 
     let inOrder = true;
-    for (let t = 0; t < terms.length; t++) {
+    for (let t = 0; t < positions.length; t++) {
       const position = positions[t] ?? 0;
       if (t > 0 && position <= (positions[t - 1] ?? 0)) inOrder = false;
       if (position === start || this.isTokenStart(position)) score += 20;
       // Конец слова: совпал с концом токена — +40; дальше идёт не цифра — +20; дальше цифра
       // (число «продолжается») — 0. Так «кт315» → «КТ315», «КТ315Г» выше, чем «КТ3151Б9».
-      const after = position + (terms[t]?.bytes.length ?? 0);
+      const after = ends[t] ?? 0;
       if (after >= end || this.isTokenStart(after)) score += 40;
       else if (!isDigit(this.data.text[after] ?? 0)) score += 20;
     }
-    if (inOrder && terms.length > 1) score += 200;
+    if (inOrder && positions.length > 1) score += 200;
     return Math.min(score, MAX_SCORE);
   }
 }

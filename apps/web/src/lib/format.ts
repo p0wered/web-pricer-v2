@@ -105,12 +105,14 @@ export function currentYear(now = new Date()): number {
 
 /**
  * Значение колонки «Год» — это год `year`: «2026», «26», «2026 г.», «2026,Элекон» (год и
- * завод). Не подходят даты вида «12.10.2026» — это записи «ГГ.ММ», которые Excel превратил
- * в дату текущего года, — а также диапазоны («2025-2026»), «26шт», «90:26» и т. п.
+ * завод), «2 026» (некоторые поставщики пишут год с пробелом, как число). Не подходят даты
+ * вида «12.10.2026» — это записи «ГГ.ММ», которые Excel превратил в дату текущего года, — а
+ * также диапазоны («2025-2026»), «26шт», «90:26» и т. п.
  */
 export function isYear(text: string | null, year: number): boolean {
   if (!text) return false;
   const short = String(year % 100).padStart(2, '0');
-  const match = /^(\d{2}|\d{4})(?:\s*г\.?)?(?:\s*,.*)?$/.exec(text.trim());
-  return match?.[1] === String(year) || match?.[1] === short;
+  const match = /^(\d{2}|\d\s?\d{3})(?:\s*г\.?)?(?:\s*,.*)?$/.exec(text.trim());
+  const found = match?.[1]?.replace(/\s/g, '');
+  return found === String(year) || found === short;
 }

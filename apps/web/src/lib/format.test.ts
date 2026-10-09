@@ -28,7 +28,7 @@ describe('formatPrice', () => {
 
 describe('isYear', () => {
   it('узнаёт год в записях колонки «Год»', () => {
-    for (const text of ['2026', '26', '2026г', '2026 г.', '2026,Элекон', ' 26 ']) {
+    for (const text of ['2026', '26', '2026г', '2026 г.', '2026,Элекон', ' 26 ', '2 026']) {
       expect(isYear(text, 2026)).toBe(true);
     }
   });
@@ -42,6 +42,7 @@ describe('isYear', () => {
       '90:26',
       '2025',
       '126',
+      '2 025',
       null,
     ]) {
       expect(isYear(text, 2026)).toBe(false);

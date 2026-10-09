@@ -94,6 +94,17 @@ describe('GET /api/search', () => {
     expect(second.offset).toBe(2);
   });
 
+  it('понимает операторы ? _ ^ $ в запросе', async () => {
+    const names = async (q: string) =>
+      searchResponseSchema
+        .parse((await search({ q, list: 'main' })).body)
+        .items.map((item) => item.name);
+    expect(await names('кт?15')).toEqual(['КТ315Г']);
+    expect(await names('с2-33_0.25_10к')).toEqual(['С2-33Н 0,25 10к']);
+    expect(await names('^динамик$')).toEqual(['Динамик']);
+    expect(await names('?')).toEqual([]);
+  });
+
   it('сортирует по количеству', async () => {
     const parsed = searchResponseSchema.parse(
       (await search({ q: 'к', list: 'main', sort: 'qty_desc' })).body,
