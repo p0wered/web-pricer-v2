@@ -144,7 +144,7 @@ describe('вход и защита API', () => {
     const blocked = await login(PASSWORD);
     expect(blocked.statusCode).toBe(429);
     expect(blocked.json().error).toMatch(
-      /Слишком много попыток входа. Попробуйте через \d+ секунд./,
+      /Слишком много попыток входа. Попробуйте через \d+ секунд[уы]?\./,
     );
   });
 
@@ -305,7 +305,7 @@ describe('настройки импорта', () => {
     });
     expect(response.statusCode).toBe(422);
     expect(response.json().fields).toEqual({
-      davUrl: 'Поле должно содержать корректный URL.',
+      davUrl: 'Нужен адрес, начинающийся с http:// или https://.',
       time: 'Введите время в формате ЧЧ:ММ.',
       day: 'Выберите день недели.',
     });
@@ -316,7 +316,7 @@ describe('настройки импорта', () => {
       payload: { ...valid, davPassword: '' },
     });
     expect(noPassword.json().fields).toEqual({
-      davPassword: 'Поле Пароль обязательно для заполнения.',
+      davPassword: 'Укажите пароль.',
     });
   });
 });
@@ -333,13 +333,13 @@ describe('смена пароля', () => {
         await change({ current: 'не тот', password: 'новый-пароль', confirmation: 'новый-пароль' })
       ).json().fields,
     ).toEqual({
-      current: 'Текущий пароль не совпадает с нашими записями.',
+      current: 'Текущий пароль введён неверно.',
     });
     expect(
       (await change({ current: PASSWORD, password: 'новый-пароль', confirmation: 'другой' })).json()
         .fields,
     ).toEqual({
-      password: 'Поле Пароль не совпадает с подтверждением',
+      password: 'Пароли не совпадают',
     });
     expect(
       (await change({ current: PASSWORD, password: 'short', confirmation: 'short' })).statusCode,

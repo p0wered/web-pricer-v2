@@ -28,7 +28,7 @@ interface RequestOptions<T> {
   schema?: z.ZodType<T>;
 }
 
-const NETWORK_ERROR = 'Нет связи с сервером. Проверьте подключение и повторите.';
+const NETWORK_ERROR = 'Нет связи с сервером. Проверьте подключение и попробуйте ещё раз.';
 
 export async function apiRequest<T = void>(
   path: string,

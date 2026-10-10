@@ -82,7 +82,7 @@ export function SearchPage() {
               className="text-xs"
               title={
                 highlightYear
-                  ? `Не выделять ${year} год`
+                  ? `Не выделять детали ${year} года`
                   : `Выделить в таблицах детали ${year} года`
               }
             >

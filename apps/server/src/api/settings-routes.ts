@@ -59,7 +59,7 @@ export function registerSettingsRoutes(api: FastifyInstance, options: SettingsRo
     if (!(await auth.verifyPassword(parsed.data.current))) {
       return reply.code(422).send({
         error: 'Проверьте поля формы.',
-        fields: { current: 'Текущий пароль не совпадает с нашими записями.' },
+        fields: { current: 'Текущий пароль введён неверно.' },
       });
     }
     await auth.setPassword(parsed.data.password);

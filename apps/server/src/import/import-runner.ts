@@ -73,7 +73,7 @@ export function acquireImportRun(
       db.prepare(
         `UPDATE import_runs
          SET status = 'failed', finished_at = ?, error_code = 'internal',
-             error_message = 'Импорт прерван: процесс остановился, не завершив его.'
+             error_message = 'Импорт прерван: процесс остановился.'
          WHERE status = 'running' AND heartbeat_at < ?`,
       ).run(now(), staleBefore);
 

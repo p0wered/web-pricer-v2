@@ -229,7 +229,7 @@ export function ImportSettingsForm({ data }: { data: SettingsResponse }) {
       <form onSubmit={save('schedule')} noValidate>
         <Section
           title="Расписание"
-          description="Настройка автоматического обновления файла"
+          description="Когда скачивать файл автоматически"
           aside={<SaveStatus savedAt={scheduleSavedAt} pending={saveSchedule.isPending} />}
           bar={
             <SaveBar

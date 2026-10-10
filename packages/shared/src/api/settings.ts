@@ -49,9 +49,9 @@ export const settingsUpdateSchema = z
     davUrl: z
       .string()
       .trim()
-      .min(1, 'Поле URL обязательно для заполнения.')
-      .refine(isHttpUrl, 'Поле должно содержать корректный URL.'),
-    davUsername: z.string().trim().min(1, 'Поле Логин обязательно для заполнения.'),
+      .min(1, 'Укажите URL файла.')
+      .refine(isHttpUrl, 'Нужен адрес, начинающийся с http:// или https://.'),
+    davUsername: z.string().trim().min(1, 'Укажите логин.'),
     /** Пусто или не передан — оставить сохранённый пароль. */
     davPassword: z.string().optional(),
     frequency: importFrequencySchema,

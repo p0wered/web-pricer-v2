@@ -10,7 +10,7 @@ APP_INITIAL_PASSWORD - пароль для входа в приложение (�
 
 При необходимости измените необязательные поля:
 
-SESSION_TTL_MINUTES - время жизни сессии без активности в минуты.
+SESSION_TTL_MINUTES - время жизни сессии без активности, в минутах.
 COOKIE_SECURE - флаг secure у cookie сессии. Auto — если запрос пришёл по HTTPS (за прокси — по X-Forwarded-Proto), true — всегда, false — никогда.
 SCHEDULE_TIMEZONE - часовой пояс расписания импорта.
 LOG_LEVEL - уровень логов: fatal | error | warn | info | debug | trace | silent

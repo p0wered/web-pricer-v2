@@ -54,7 +54,7 @@ export class SettingsStore {
     let passwordEnc: string;
     if (update.davPassword) passwordEnc = encryptSecret(update.davPassword, this.appSecret);
     else if (existing) passwordEnc = existing.dav_password_enc;
-    else throw new MissingDavPasswordError('Поле Пароль обязательно для заполнения.');
+    else throw new MissingDavPasswordError('Укажите пароль.');
 
     this.db
       .prepare(

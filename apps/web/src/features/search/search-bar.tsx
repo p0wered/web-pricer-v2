@@ -106,7 +106,7 @@ export function SearchBar({ value, onChange, onSubmit, actions }: SearchBarProps
         pressed={convert}
         onClick={toggleConvert}
         className="text-xs"
-        title="Переводить набранное в английской раскладке в русскую"
+        title="Переключать набранное с английской раскладки на русскую"
       >
         EN→RU
       </Button>

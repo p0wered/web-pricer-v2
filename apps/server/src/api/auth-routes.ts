@@ -18,6 +18,14 @@ export interface AuthRouteOptions {
 const PUBLIC_ROUTES = new Set(['GET /api/health', 'POST /api/auth/login']);
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
+const secondsPlural = new Intl.PluralRules('ru-RU');
+const SECONDS_WORD: Partial<Record<Intl.LDMLPluralRule, string>> = {
+  one: 'секунду',
+  few: 'секунды',
+};
+const formatSeconds = (count: number) =>
+  `${count} ${SECONDS_WORD[secondsPlural.select(count)] ?? 'секунд'}`;
+
 declare module 'fastify' {
   interface FastifyRequest {
     sessionToken?: string;
@@ -71,7 +79,9 @@ export function registerAuthRoutes(api: FastifyInstance, options: AuthRouteOptio
       return reply
         .code(429)
         .header('Retry-After', String(retryAfter))
-        .send({ error: `Слишком много попыток входа. Попробуйте через ${retryAfter} секунд.` });
+        .send({
+          error: `Слишком много попыток входа. Попробуйте через ${formatSeconds(retryAfter)}.`,
+        });
     }
     if (!(await auth.verifyPassword(parsed.data.password))) {
       return reply
