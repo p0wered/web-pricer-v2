@@ -1,4 +1,4 @@
-import { LogOut, Moon, Settings } from 'lucide-react';
+import { CircleHelp, LogOut, Moon, Palette, Settings } from 'lucide-react';
 import {
   type KeyboardEvent,
   type PointerEvent,
@@ -10,6 +10,8 @@ import {
 } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useLogout } from '../api/queries.ts';
+import { SearchHelp } from '../features/search/search-help.tsx';
+import { useRowColors } from '../lib/row-colors.ts';
 import { useTheme } from '../lib/theme.ts';
 import { buttonClasses } from './button.tsx';
 import { popoverSurface } from './popover.tsx';
@@ -28,15 +30,41 @@ const menuItems = (menu: HTMLElement) => [
   ...menu.querySelectorAll<HTMLElement>('[role="menuitem"],[role="menuitemcheckbox"]'),
 ];
 
+/** Переключатель-«тумблер» в пункте меню (тёмная тема, цветные строки). */
+function MenuSwitch({ on }: { on: boolean }) {
+  return (
+    <span
+      aria-hidden
+      data-theme-animate
+      className={cx(
+        'ml-auto flex h-4 w-7 shrink-0 items-center rounded-full p-0.5 transition-colors duration-200 motion-reduce:transition-none',
+        on ? 'bg-accent' : 'bg-line-strong',
+      )}
+    >
+      <span
+        data-theme-animate
+        className={cx(
+          'size-3 rounded-full bg-white shadow-sm transition-transform duration-200 ease-[cubic-bezier(0.34,1.4,0.64,1)] motion-reduce:transition-none',
+          on && 'translate-x-3',
+        )}
+      />
+    </span>
+  );
+}
+
 /**
- * Меню приложения (шаблон WAI-ARIA «menu button»): настройки, тема, выход.
- * Панель позиционируется от ближайшего `relative`-предка — под его правым краем.
+ * Меню приложения (шаблон WAI-ARIA «menu button»): настройки, справка по поиску, тема,
+ * цветные строки, выход. Панель позиционируется от ближайшего `relative`-предка — под его
+ * правым краем.
  */
 export function AppMenu({
   settings,
+  search = false,
   variant = 'secondary',
 }: {
   settings: boolean;
+  /** Страница поиска: справка по поиску и переключатель цветных строк таблиц. */
+  search?: boolean;
   /** `ghost` — без фона в покое (страница настроек); по умолчанию — как кнопки в хедере поиска. */
   variant?: 'secondary' | 'ghost';
 }) {
@@ -46,6 +74,8 @@ export function AppMenu({
   // Какой пункт получит фокус, когда панель откроется.
   const focusOnOpen = useRef<'first' | 'last'>('first');
   const { theme, toggle } = useTheme();
+  const rowColors = useRowColors();
+  const [helpOpen, setHelpOpen] = useState(false);
   const logout = useLogout();
   const navigate = useNavigate();
   const menuId = useId();
@@ -165,6 +195,23 @@ export function AppMenu({
             Настройки
           </Link>
         )}
+        {search && (
+          <button
+            type="button"
+            role="menuitem"
+            tabIndex={-1}
+            className={MENU_ITEM}
+            onPointerMove={focusItem}
+            onClick={() => {
+              hide();
+              setHelpOpen(true);
+            }}
+          >
+            <CircleHelp aria-hidden size={15} strokeWidth={1.75} className={MENU_ICON} />
+            Справка
+          </button>
+        )}
+        {(settings || search) && <div role="separator" className="mx-1 my-1 h-px bg-line" />}
         <button
           type="button"
           role="menuitemcheckbox"
@@ -177,23 +224,24 @@ export function AppMenu({
         >
           <Moon aria-hidden size={15} strokeWidth={1.75} className={MENU_ICON} />
           Тёмная тема
-          <span
-            aria-hidden
-            data-theme-animate
-            className={cx(
-              'ml-auto flex h-4 w-7 items-center rounded-full p-0.5 transition-colors duration-200 motion-reduce:transition-none',
-              theme === 'dark' ? 'bg-accent' : 'bg-line-strong',
-            )}
-          >
-            <span
-              data-theme-animate
-              className={cx(
-                'size-3 rounded-full bg-white shadow-sm transition-transform duration-200 ease-[cubic-bezier(0.34,1.4,0.64,1)] motion-reduce:transition-none',
-                theme === 'dark' && 'translate-x-3',
-              )}
-            />
-          </span>
+          <MenuSwitch on={theme === 'dark'} />
         </button>
+        {search && (
+          <button
+            type="button"
+            role="menuitemcheckbox"
+            aria-checked={rowColors.enabled}
+            tabIndex={-1}
+            className={MENU_ITEM}
+            onPointerMove={focusItem}
+            // Как с темой: меню не закрывается, результат виден сразу.
+            onClick={rowColors.toggle}
+          >
+            <Palette aria-hidden size={15} strokeWidth={1.75} className={MENU_ICON} />
+            Цветные строки
+            <MenuSwitch on={rowColors.enabled} />
+          </button>
+        )}
         <div role="separator" className="mx-1 my-1 h-px bg-line" />
         <button
           type="button"
@@ -219,6 +267,17 @@ export function AppMenu({
           Выйти
         </button>
       </div>
+
+      {search && (
+        <SearchHelp
+          open={helpOpen}
+          onClose={() => {
+            setHelpOpen(false);
+            // Пункт меню, с которого открыли справку, скрыт — фокус возвращается на кнопку меню.
+            triggerRef.current?.focus();
+          }}
+        />
+      )}
     </>
   );
 }
@@ -244,7 +303,7 @@ export function AppHeader({ children }: { children: ReactNode }) {
         {children}
       </div>
       <nav className="ml-auto flex shrink-0 items-center" aria-label="Приложение">
-        <AppMenu settings />
+        <AppMenu settings search />
       </nav>
     </header>
   );

@@ -18,6 +18,10 @@
           theme === 'dark' ||
           (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
         if (dark) document.documentElement.classList.add('dark');
+        try {
+          if (localStorage.getItem('webpricer.row-colors') === 'off')
+            document.documentElement.dataset.rowColors = 'off';
+        } catch (e) {}
       })();
     </script>
   </head>

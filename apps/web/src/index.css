@@ -213,6 +213,15 @@
   background: var(--row-bg-hover);
 }
 
+/* Цветные строки выключены (меню → «Цветные строки»): фон обычный, цвет остаётся у точки. */
+:root[data-row-colors='off'] .supplier-row {
+  background: transparent;
+}
+
+:root[data-row-colors='off'] .supplier-row:hover {
+  background: var(--row-hover);
+}
+
 /*
  * Скруглённые верхние углы строк под шапкой таблицы: уголки цвета карточки поверх строк,
  * радиус — как у плашки шапки (rounded-lg). Работают и при прокрутке, когда первая строка
@@ -361,5 +370,42 @@
   .burger-bar,
   [aria-expanded='true'] > .burger-bar {
     transition: none;
+  }
+}
+
+/* Модальное окно (Dialog): затемнение и появление. */
+.dialog::backdrop {
+  background: rgb(24 24 27 / 0.32);
+}
+
+.dark .dialog::backdrop {
+  background: rgb(0 0 0 / 0.6);
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    scale: 0.97;
+  }
+}
+
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.dialog[open] {
+  animation: dialog-in 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dialog[open]::backdrop {
+  animation: backdrop-in 160ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog[open],
+  .dialog[open]::backdrop {
+    animation: none;
   }
 }
