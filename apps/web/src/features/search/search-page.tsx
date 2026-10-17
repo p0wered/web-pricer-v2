@@ -68,7 +68,7 @@ export function SearchPage() {
   const active = query.length > 0;
 
   return (
-    <div className="flex h-full flex-col gap-2 p-2">
+    <div className="flex h-full flex-col gap-3 p-3">
       <AppHeader>
         <SearchBar
           value={draft}

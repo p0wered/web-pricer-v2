@@ -3,7 +3,7 @@ import { type ReactNode, useId } from 'react';
 const cx = (...classes: (string | false | null | undefined)[]) => classes.filter(Boolean).join(' ');
 
 /** Блок интерфейса («бенто»): поиск, таблицы, разделы настроек — на сером фоне страницы. */
-export const CARD = 'rounded-2xl bg-surface border border-line';
+export const CARD = 'rounded-2xl bg-surface';
 
 interface FieldProps {
   label: string;

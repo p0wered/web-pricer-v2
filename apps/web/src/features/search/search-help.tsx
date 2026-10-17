@@ -1,5 +1,4 @@
 // Справка по поиску (пункт меню «Как искать»): обычный поиск и символы ? _ ^ $.
-// Правила — в apps/server/src/search/search-index.ts и docs/customer-feedback-2026-10.md.
 import type { ReactNode } from 'react';
 import { Dialog } from '../../components/dialog.tsx';
 
@@ -66,7 +65,7 @@ export function SearchHelp({ open, onClose }: { open: boolean; onClose: () => vo
       <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted marker:text-subtle">
         <li>Большие и маленькие буквы не различаются.</li>
         <li>
-          Латиница и кириллица — одно и то же: <Code>KT315</Code> = <Code>КТ315</Code>.
+          Латиница и кириллица - одно и то же: <Code>KT315</Code> = <Code>КТ315</Code>.
         </li>
         <li>
           Дефисы и пробелы внутри обозначения не важны: <Code>КТ-315</Code> = <Code>КТ 315</Code>.
@@ -118,7 +117,7 @@ export function SearchHelp({ open, onClose }: { open: boolean; onClose: () => vo
           notFound={['140УД601', '140УД608']}
         >
           Ставится в конце: найдутся только слова, которые заканчиваются именно так. После слова в
-          названии может идти что угодно — год, «ОТК» и т. п.
+          названии может идти что угодно - год, «ОТК» и т. п.
         </Operator>
       </ul>
     </Dialog>

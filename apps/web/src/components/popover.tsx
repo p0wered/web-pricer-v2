@@ -31,7 +31,7 @@ export function usePopover(
 /** Карточка выпадающей панели над содержимым и её появление; положение задаёт вызывающий. */
 export function popoverSurface(open: boolean): string {
   return cx(
-    'absolute z-30 rounded-xl bg-surface p-1.5 shadow-popover dark:ring-1 dark:ring-line',
+    'absolute z-30 rounded-xl bg-surface p-1.5 shadow-popover',
     'duration-150 ease-out motion-reduce:transition-none',
     // Видимой панель становится сразу (в первом кадре перехода она ещё hidden, и в неё
     // нельзя перевести фокус), а скрывается — после того, как погаснет.

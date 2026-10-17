@@ -37,7 +37,7 @@ export function Dialog({ open, onClose, title, children }: DialogProps) {
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
-      className="dialog m-auto max-h-[min(760px,calc(100%-32px))] w-[min(600px,calc(100%-32px))] flex-col overflow-hidden rounded-2xl bg-surface p-0 text-fg shadow-popover open:flex dark:ring-1 dark:ring-line"
+      className="dialog m-auto max-h-[min(760px,calc(100%-32px))] w-[min(600px,calc(100%-32px))] flex-col overflow-hidden rounded-2xl bg-surface p-0 text-fg shadow-popover open:flex"
     >
       <div className="flex shrink-0 items-center gap-3 py-3 pr-3 pl-6">
         <h2 id={titleId} className="text-lg font-bold tracking-[-0.01em]">
