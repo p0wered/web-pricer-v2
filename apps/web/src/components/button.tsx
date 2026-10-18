@@ -16,8 +16,8 @@ const ACCENT_FRAME = 'border border-transparent hover:border-accent/60 hover:bg-
 const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
   primary: 'bg-accent text-accent-fg hover:bg-accent-hover',
   secondary: `bg-sunken text-fg hover:text-accent ${ACCENT_FRAME}`,
-  // Без фона в покое; при наведении акцентом окрашивается только иконка, текст остаётся.
-  ghost: `text-fg ${ACCENT_FRAME} [&_svg]:transition-colors hover:[&_svg]:text-accent`,
+  // Без фона в покое; при наведении акцентом окрашиваются и текст, и иконка.
+  ghost: `text-fg hover:text-accent ${ACCENT_FRAME}`,
 };
 
 // Заменяет классы варианта целиком: cx не сливает конфликтующие утилиты,
