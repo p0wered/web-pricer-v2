@@ -19,6 +19,8 @@ export const searchRequestSchema = z.object({
   q: z.string().max(500).default(''),
   list: searchListSchema,
   sort: searchSortSchema.default('relevance'),
+  /** Галочка «число целиком»: число запроса не входит в другое число («1» ≠ 15, 1,5; КТ315 ≠ КТ3150). */
+  wholeNumbers: z.stringbool().default(false),
   offset: z.coerce.number().int().min(0).default(0),
   limit: z.coerce.number().int().min(1).max(SEARCH_MAX_PAGE_SIZE).default(SEARCH_PAGE_SIZE),
 });

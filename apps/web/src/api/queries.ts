@@ -60,15 +60,24 @@ export function useLogout() {
   });
 }
 
-/** Одна таблица выдачи; порции подгружаются при прокрутке. */
-export function useSearchList(query: string, list: SearchList, sort: SearchSort) {
+/**
+ * Одна таблица выдачи; порции подгружаются при прокрутке. `wholeNumbers` — галочка «число
+ * целиком».
+ */
+export function useSearchList(
+  query: string,
+  list: SearchList,
+  sort: SearchSort,
+  wholeNumbers: boolean,
+) {
   return useInfiniteQuery({
-    queryKey: ['search', query, list, sort],
+    queryKey: ['search', query, list, sort, wholeNumbers],
     queryFn: ({ pageParam, signal }) => {
       const params = new URLSearchParams({
         q: query,
         list,
         sort,
+        wholeNumbers: String(wholeNumbers),
         offset: String(pageParam),
         limit: String(SEARCH_PAGE_SIZE),
       });

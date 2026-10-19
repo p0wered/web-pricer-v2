@@ -57,7 +57,7 @@ export class SearchService {
       );
 
     const started = performance.now();
-    const terms = parseQuery(request.q);
+    const terms = parseQuery(request.q, { wholeNumbers: request.wholeNumbers });
     const { entry, cached } = this.entryFor(snapshot, queryKey(terms), () =>
       snapshot.index.match(terms),
     );

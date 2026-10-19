@@ -238,12 +238,14 @@ function buildTrigrams(text: Uint8Array, starts: Uint32Array, count: number) {
 // работают операторы:
 //   ?  — ровно один любой символ: «рс?тв» → РС4ТВ, РС-7ТВ, но не РСТВ;
 //   _  — любые символы, в том числе ни одного. Части слова между «_» идут в названии по порядку:
-//        «с2-33_1_10» → «С2-33Н 1 Вт 10 кОм», «С2-33-1-10». Число в части после «_» ищется
-//        целиком: «1» находит «1Вт», «1 кОм», «-1-», но не 15, 1.2, 0.125;
+//        «с2-33_1_10» → «С2-33Н 1 Вт 10 кОм», «С2-33-1-10»;
 //   ^  — в начале части: совпадение начинается с начала слова в названии («^кнр» ≠ 2КНР);
 //   $  — в конце части: совпадение заканчивается концом слова («140уд6$» ≠ 140УД601, но находит
 //        «140УД6 (87г)»).
 // В названиях эти символы — разделители, поэтому как операторы в запросе ничего не теряют.
+//
+// Галочка «число целиком» (отдельно от операторов) — числа запроса не входят в другое число
+// названия: «1» находит «1Вт», «1 кОм», «-1-», но не 15, 1.2, 0.125; «кт315» не находит КТ3150.
 
 /** Байт `?` в части запроса: совпадает с любым символом названия (в тексте индекса нулей нет). */
 const WILDCARD = 0x00;
@@ -264,8 +266,11 @@ export interface QueryPart {
    * буква («10к» ≠ «10кв»).
    */
   valueWithUnit: boolean;
-  /** Число после `_`: ищется целиком — после совпадения число не продолжается («1» ≠ «15», «1.2»). */
-  wholeNumber: boolean;
+  /**
+   * Галочка «число целиком»: число на краю совпадения не продолжается в названии ни вперёд, ни
+   * назад («1» ≠ «15», «1.2», «0.125»; «кт315» ≠ «КТ3150»).
+   */
+  wholeNumbers: boolean;
   /** `^` — совпадение начинается с начала слова в названии. */
   atWordStart: boolean;
   /** `$` — совпадение заканчивается концом слова в названии. */
@@ -280,7 +285,6 @@ export interface QueryTerm {
 // Единицы и множители, после которых буква означает уже другое значение. Одиночные «в», «а»,
 // «м», «г» сюда не входят: в названиях это часто буква типа («К52-1В», «К10-17А»).
 const VALUE_WITH_UNIT = /^\d+(?:\.\d+)?(?:к|мкф|пф|нф|вт|ом|гц|кгц|мгц|кв|мв|ма|мка)$/;
-const NUMBER = /^\d+(?:\.\d+)?$/;
 
 // Единица, написанная отдельным словом после числа: «33 мкФ», «1,5 кОм», «50 V».
 const UNIT_WORD =
@@ -306,7 +310,7 @@ const isSeparatorChar = (char: string | undefined) =>
   char !== undefined && normalizeText(char) === '';
 
 /** Часть слова между `_`; `null`, если в ней нет ни одного символа. */
-function parsePart(raw: string, afterGap: boolean): QueryPart | null {
+function parsePart(raw: string, wholeNumbers: boolean): QueryPart | null {
   const atWordStart = raw.startsWith('^');
   const atWordEnd = raw.endsWith('$');
   // `^` и `$` не на краю части смысла не имеют — там они просто разделители.
@@ -343,18 +347,26 @@ function parsePart(raw: string, afterGap: boolean): QueryPart | null {
     hasWildcard,
     startsWithDigit: isDigit(bytes[0] ?? 0),
     valueWithUnit: singleToken && VALUE_WITH_UNIT.test(normalized),
-    wholeNumber: afterGap && singleToken && NUMBER.test(normalized),
+    wholeNumbers,
     atWordStart,
     atWordEnd,
   };
 }
 
-export function parseQuery(query: string): QueryTerm[] {
+export interface QueryOptions {
+  /** Галочка «число целиком» (см. `QueryPart.wholeNumbers`). */
+  wholeNumbers?: boolean;
+}
+
+export function parseQuery(
+  query: string,
+  { wholeNumbers = false }: QueryOptions = {},
+): QueryTerm[] {
   const terms: QueryTerm[] = [];
   for (const word of queryWords(query)) {
     const parts: QueryPart[] = [];
-    word.split('_').forEach((raw, i) => {
-      const part = parsePart(raw, i > 0);
+    word.split('_').forEach((raw) => {
+      const part = parsePart(raw, wholeNumbers);
       if (part) parts.push(part);
     });
     // Слово из одних операторов («?», «^_») нашло бы весь каталог — пропускаем.
@@ -364,7 +376,7 @@ export function parseQuery(query: string): QueryTerm[] {
 }
 
 function partKey(part: QueryPart): string {
-  let key = part.wholeNumber ? '#' : '';
+  let key = part.wholeNumbers ? '#' : '';
   if (part.atWordStart) key += '^';
   part.bytes.forEach((byte, k) => {
     if (part.separatorBefore[k]) key += '-';
@@ -408,6 +420,11 @@ export interface MatchResult {
 
 function isDigit(byte: number): boolean {
   return byte >= 0x30 && byte <= 0x39;
+}
+
+/** Цифра или точка: точка в тексте индекса бывает только внутри числа. */
+function isNumberByte(byte: number): boolean {
+  return isDigit(byte) || byte === DOT;
 }
 
 function isLetter(byte: number): boolean {
@@ -485,21 +502,24 @@ export class SearchIndex {
       for (let k = 1; k < length; k++) {
         if (this.isTokenStart(p + k) && part.separatorBefore[k] === 0) return false;
       }
-      if (part.startsWithDigit) {
+      // С галочкой проверяется байт названия: число может начинаться и под `?`.
+      if (part.startsWithDigit || (part.wholeNumbers && isNumberByte(text[p] ?? 0))) {
         const before = text[p - 1] ?? 0;
         if (isDigit(before) || before === DOT) return false;
       }
     }
 
     // Правила конца совпадения есть не у каждой части — проверяем, только если нужно.
-    if (part.atWordEnd || part.valueWithUnit || part.wholeNumber) {
+    if (part.atWordEnd || part.valueWithUnit || part.wholeNumbers) {
       const after = p + length;
       const endsToken = after >= end || this.isTokenStart(after);
       if (part.atWordEnd && !endsToken) return false;
       if (!endsToken) {
         const next = text[after] ?? 0;
         if (part.valueWithUnit && isLetter(next)) return false;
-        if (part.wholeNumber && (isDigit(next) || next === DOT)) return false;
+        if (part.wholeNumbers && isNumberByte(text[after - 1] ?? 0) && isNumberByte(next)) {
+          return false;
+        }
       }
     }
     return true;

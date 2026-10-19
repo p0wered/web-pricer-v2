@@ -3,6 +3,7 @@ import {
   type IndexItem,
   orderResults,
   parseQuery,
+  type QueryOptions,
   queryKey,
   type ResultList,
   type ResultSort,
@@ -23,13 +24,21 @@ function search(
   query: string,
   list: ResultList = 'main',
   sort: ResultSort = 'relevance',
+  options: QueryOptions = {},
 ): number[] {
-  return [...orderResults(index, index.match(parseQuery(query)), list, sort)];
+  return [...orderResults(index, index.match(parseQuery(query, options)), list, sort)];
 }
 
-function names(index: SearchIndex, source: { name: string }[], query: string): string[] {
-  return search(index, query).map((id) => source[id - 1]?.name ?? '');
+function names(
+  index: SearchIndex,
+  source: { name: string }[],
+  query: string,
+  options: QueryOptions = {},
+): string[] {
+  return search(index, query, 'main', 'relevance', options).map((id) => source[id - 1]?.name ?? '');
 }
+
+const whole = { wholeNumbers: true };
 
 describe('сопоставление', () => {
   it('находит латиницу и кириллицу одинаково, разделители не важны', () => {
@@ -104,7 +113,7 @@ describe('операторы ? _ ^ $', () => {
     expect(names(buildIndex(items), items, 'РС?ТВ').sort()).toEqual(['2РС4ТВ', 'РС-7ТВ', 'РС4ТВ']);
   });
 
-  it('_ — части по порядку, числа после _ ищутся целиком', () => {
+  it('_ — части по порядку; с галочкой числа ищутся целиком', () => {
     // Строки со скриншота заказчика (запрос «С2-33 1 10») и записи, которые он хотел найти.
     const items = [
       'С2-33 0.25Вт 1кОм 10%',
@@ -129,8 +138,10 @@ describe('операторы ? _ ^ $', () => {
       'С2-33 10кОм 1Вт',
     ].map((name) => ({ name }));
     const index = buildIndex(items);
+    // Без галочки «_» — только порядок: «1» находит и «150кОм», «10» — и «16кОм» нет (не по порядку).
+    expect(names(index, items, 'С2-33_1_10')).toContain('С2-33Н 0.125Вт 150кОм 10%');
     // «10» совпадает и с допуском 10% — так решили; точный запрос — с единицей.
-    expect(names(index, items, 'С2-33_1_10').sort()).toEqual([
+    expect(names(index, items, 'С2-33_1_10', whole).sort()).toEqual([
       'С2-33 0.25Вт 1кОм 10%',
       'С2-33-1-10',
       'С2-33Н 1 Вт 10 кОм',
@@ -142,25 +153,32 @@ describe('операторы ? _ ^ $', () => {
       'С2-33Н 1Вт 680ом 10%',
       'С2-33Н 2Вт 1кОм 10%',
     ]);
-    expect(names(index, items, 'С2-33_1_10к').sort()).toEqual([
+    expect(names(index, items, 'С2-33_1_10к', whole).sort()).toEqual([
       'С2-33Н 1 Вт 10 кОм',
       'С2-33Н 1Вт 10кОм 5%',
     ]);
   });
 
-  it('дробное число после _ — тоже целиком', () => {
+  it('дробное число с галочкой — тоже целиком', () => {
     const items = [
       'К50-35 50В 4,7мкФ',
       'К50-35 50В 4,75мкФ',
       'К50-35 50В 14,7мкФ',
       'К50-35 4,7мкФ 50В',
     ].map((name) => ({ name }));
-    expect(names(buildIndex(items), items, 'К50-35_50в_4.7')).toEqual(['К50-35 50В 4,7мкФ']);
+    const index = buildIndex(items);
+    expect(names(index, items, 'К50-35_50в_4.7', whole)).toEqual(['К50-35 50В 4,7мкФ']);
+    expect(names(index, items, 'К50-35_50в_4.7').sort()).toEqual([
+      'К50-35 50В 4,75мкФ',
+      'К50-35 50В 4,7мкФ',
+    ]);
   });
 
-  it('число в начале — как обычное слово: не начинается внутри числа, но может продолжаться', () => {
+  it('без галочки число не начинается внутри числа, но может продолжаться', () => {
     const items = ['50В 4.7мкФ', '500В 4.7мкФ', '150В 4.7мкФ'].map((name) => ({ name }));
-    expect(names(buildIndex(items), items, '50_4.7').sort()).toEqual(['500В 4.7мкФ', '50В 4.7мкФ']);
+    const index = buildIndex(items);
+    expect(names(index, items, '50_4.7').sort()).toEqual(['500В 4.7мкФ', '50В 4.7мкФ']);
+    expect(names(index, items, '50_4.7', whole)).toEqual(['50В 4.7мкФ']);
   });
 
   it('^ и $ — начало и конец слова', () => {
@@ -191,7 +209,7 @@ describe('операторы ? _ ^ $', () => {
   it('ключ кэша различает операторы и разделители', () => {
     const key = (query: string) => queryKey(parseQuery(query));
     expect(key('кт3_15')).not.toBe(key('кт315'));
-    expect(key('_1')).not.toBe(key('1'));
+    expect(queryKey(parseQuery('1', whole))).not.toBe(key('1'));
     expect(key('мп-0')).not.toBe(key('мп0'));
     expect(key('^кнр')).not.toBe(key('кнр'));
     expect(key('K52-1')).toBe(key('к52-1'));
@@ -219,7 +237,63 @@ describe('операторы ? _ ^ $', () => {
       '?с4_в',
       '33_1',
     ]) {
-      const terms = parseQuery(query);
+      for (const options of [{}, whole]) {
+        const terms = parseQuery(query, options);
+        expect(index.match(terms), query).toEqual(index.match(terms, { useIndex: false }));
+      }
+    }
+  });
+});
+
+describe('галочка «число целиком»', () => {
+  it('числа через пробел ищутся целиком, вместе с дробью', () => {
+    const items = [
+      'С2-33Н 1Вт 10кОм 5%',
+      'С2-33-1-10',
+      'С2-33Н 15Вт 100кОм',
+      'С2-33Н 1,5Вт 10кОм',
+      'С2-33Н 0,125Вт 10кОм 1%',
+    ].map((name) => ({ name }));
+    const index = buildIndex(items);
+    expect(names(index, items, 'С2-33 1 10', whole).sort()).toEqual([
+      'С2-33-1-10',
+      'С2-33Н 0,125Вт 10кОм 1%',
+      'С2-33Н 1Вт 10кОм 5%',
+    ]);
+    expect(names(index, items, 'С2-33 1 10')).toHaveLength(5);
+    expect(names(index, items, 'с2-33 1.5', whole)).toEqual(['С2-33Н 1,5Вт 10кОм']);
+  });
+
+  it('касается и чисел в обозначениях; буква после числа разрешена', () => {
+    const items = ['КТ315', 'КТ315Г', 'КТ3150', 'КТ3151Б9', 'КТ315-1', 'К50-35', 'К50-350'].map(
+      (name) => ({ name }),
+    );
+    const index = buildIndex(items);
+    expect(names(index, items, 'кт315', whole).sort()).toEqual(['КТ315', 'КТ315-1', 'КТ315Г']);
+    expect(names(index, items, 'к50-35', whole)).toEqual(['К50-35']);
+    expect(names(index, items, 'кт315')).toHaveLength(5);
+  });
+
+  it('число на краю ? тоже не входит в другое число', () => {
+    const items = ['РС15', 'РС115', 'РС150', 'РС1,5'].map((name) => ({ name }));
+    const index = buildIndex(items);
+    expect(names(index, items, 'рс?5', whole)).toEqual(['РС15']);
+    // `?` может совпасть с десятичной точкой: «,5» в «1,5» — часть числа.
+    expect(names(index, items, '?5', whole)).toEqual(['РС15']);
+  });
+
+  it('отбор через индекс совпадает с полным перебором', () => {
+    const items = [
+      'КТ315Г',
+      'КТ3150',
+      'С2-33Н 1 Вт 10 кОм',
+      'С2-33-1-10',
+      'К50 4,75мкФ',
+      'РС115',
+    ].map((name) => ({ name }));
+    const index = buildIndex(items);
+    for (const query of ['кт315', 'с2-33 1 10', '4.7', '1', '?5', 'с2_1_10']) {
+      const terms = parseQuery(query, whole);
       expect(index.match(terms), query).toEqual(index.match(terms, { useIndex: false }));
     }
   });

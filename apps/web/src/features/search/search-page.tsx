@@ -1,29 +1,43 @@
 import type { SearchSort } from '@webpricer/shared';
 import { useQueryClient } from '@tanstack/react-query';
-import { Ban, Package } from 'lucide-react';
+import { Ban, CalendarCheck, Hash, Languages, Package } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useSearchList } from '../../api/queries.ts';
 import { AppHeader } from '../../components/app-header.tsx';
-import { Button } from '../../components/button.tsx';
 import { currentYear } from '../../lib/format.ts';
 import { readStored, writeStored } from '../../lib/storage.ts';
 import { detailColumns, stopColumns } from './columns.tsx';
 import { ResultPanel } from './result-panel.tsx';
 import { ResultTable } from './result-table.tsx';
 import { SearchBar } from './search-bar.tsx';
+import { SearchOptions } from './search-options.tsx';
 import { SplitPanes } from './split-panes.tsx';
 
 const HIGHLIGHT_YEAR_KEY = 'webpricer.highlight-year';
+const WHOLE_NUMBERS_KEY = 'webpricer.whole-numbers';
+const LAYOUT_KEY = 'webpricer.layout-convert';
+
+/** Переключатель, который запоминается в браузере. */
+function useStoredToggle(key: string): [boolean, () => void] {
+  const [on, setOn] = useState(() => readStored(key) === 'true');
+  const toggle = () => {
+    setOn((current) => {
+      writeStored(key, String(!current));
+      return !current;
+    });
+  };
+  return [on, toggle];
+}
 
 export function SearchPage() {
   const [params, setParams] = useSearchParams();
   const query = (params.get('q') ?? '').trim();
   const [draft, setDraft] = useState(query);
   const [sort, setSort] = useState<SearchSort>('relevance');
-  const [highlightYear, setHighlightYear] = useState(
-    () => readStored(HIGHLIGHT_YEAR_KEY) === 'true',
-  );
+  const [highlightYear, toggleHighlightYear] = useStoredToggle(HIGHLIGHT_YEAR_KEY);
+  const [wholeNumbers, toggleWholeNumbers] = useStoredToggle(WHOLE_NUMBERS_KEY);
+  const [convert, toggleConvert] = useStoredToggle(LAYOUT_KEY);
   // Год берётся при открытии страницы: в новом году подсветка переключится сама.
   const [year] = useState(() => currentYear());
   const queryClient = useQueryClient();
@@ -41,8 +55,8 @@ export function SearchPage() {
     document.title = query ? `${query} — WebPricer` : 'Поиск — WebPricer';
   }, [query]);
 
-  const special = useSearchList(query, 'special', 'relevance');
-  const main = useSearchList(query, 'main', sort);
+  const special = useSearchList(query, 'special', 'relevance', wholeNumbers);
+  const main = useSearchList(query, 'main', sort, wholeNumbers);
 
   const submit = () => {
     const next = draft.trim();
@@ -53,13 +67,6 @@ export function SearchPage() {
       return;
     }
     setParams(next ? { q: next } : {});
-  };
-
-  const toggleHighlightYear = () => {
-    setHighlightYear((current) => {
-      writeStored(HIGHLIGHT_YEAR_KEY, String(!current));
-      return !current;
-    });
   };
 
   const shownYear = highlightYear ? year : null;
@@ -74,20 +81,34 @@ export function SearchPage() {
           value={draft}
           onChange={setDraft}
           onSubmit={submit}
-          actions={
-            <Button
-              size="lg"
-              pressed={highlightYear}
-              onClick={toggleHighlightYear}
-              className="text-xs"
-              title={
-                highlightYear
-                  ? `Не выделять детали ${year} года`
-                  : `Выделить в таблицах детали ${year} года`
-              }
-            >
-              {year}
-            </Button>
+          convert={convert}
+          options={
+            <SearchOptions
+              toggles={[
+                {
+                  label: 'Раскладка EN→RU',
+                  icon: Languages,
+                  on: convert,
+                  onToggle: toggleConvert,
+                  title: 'Переключать набранное с английской раскладки на русскую',
+                },
+                {
+                  label: 'Число целиком',
+                  icon: Hash,
+                  on: wholeNumbers,
+                  onToggle: toggleWholeNumbers,
+                  title:
+                    'Число не входит в другое: 1 не найдёт 15, 150, 1,5; КТ315 не найдёт КТ3150',
+                },
+                {
+                  label: `Выделять ${year} год`,
+                  icon: CalendarCheck,
+                  on: highlightYear,
+                  onToggle: toggleHighlightYear,
+                  title: `Выделять в таблицах детали ${year} года`,
+                },
+              ]}
+            />
           }
         />
       </AppHeader>
@@ -108,7 +129,7 @@ export function SearchPage() {
                 idle={!active}
                 idleText="Нет данных для отображения"
                 emptyText="В стоп-листе ничего не найдено"
-                resetKey={query}
+                resetKey={`${query}|${wholeNumbers}`}
               />
             </ResultPanel>
           }
@@ -127,7 +148,7 @@ export function SearchPage() {
                 idle={!active}
                 idleText="Нет данных для отображения"
                 emptyText="Ничего не найдено. Попробуйте сократить запрос или проверить раскладку."
-                resetKey={`${query}|${sort}`}
+                resetKey={`${query}|${sort}|${wholeNumbers}`}
               />
             </ResultPanel>
           }
