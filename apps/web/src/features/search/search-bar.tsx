@@ -1,5 +1,5 @@
 import { ClipboardPaste, Copy, Scissors, Search, X } from 'lucide-react';
-import { type FormEvent, useRef } from 'react';
+import { type FormEvent, type ReactNode, useRef } from 'react';
 import { Button } from '../../components/button.tsx';
 import { applyLayoutConversion } from '../../lib/keyboard-layout.ts';
 
@@ -10,11 +10,13 @@ interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
-  /** Переключатель EN→RU (в меню): набранное с английской раскладки переводится на русскую. */
+  /** Переключатель EN→RU (в «Параметрах»): набранное с английской раскладки — на русскую. */
   convert: boolean;
+  /** Кнопка «Параметры» — после «Найти». */
+  options: ReactNode;
 }
 
-export function SearchBar({ value, onChange, onSubmit, convert }: SearchBarProps) {
+export function SearchBar({ value, onChange, onSubmit, convert, options }: SearchBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const clipboard = clipboardAvailable();
   const clipboardHint = clipboard ? undefined : 'Буфер обмена доступен только по HTTPS';
@@ -89,6 +91,7 @@ export function SearchBar({ value, onChange, onSubmit, convert }: SearchBarProps
       >
         <span className="hidden sm:inline">Найти</span>
       </Button>
+      {options}
       <div className="hidden items-center gap-2 sm:flex" role="group" aria-label="Буфер обмена">
         <Button
           size="lg"

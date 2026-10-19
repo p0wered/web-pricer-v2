@@ -11,6 +11,7 @@ import { detailColumns, stopColumns } from './columns.tsx';
 import { ResultPanel } from './result-panel.tsx';
 import { ResultTable } from './result-table.tsx';
 import { SearchBar } from './search-bar.tsx';
+import { SearchOptions } from './search-options.tsx';
 import { SplitPanes } from './split-panes.tsx';
 
 const HIGHLIGHT_YEAR_KEY = 'webpricer.highlight-year';
@@ -75,34 +76,44 @@ export function SearchPage() {
 
   return (
     <div className="flex h-full flex-col gap-3 p-3">
-      <AppHeader
-        searchToggles={[
-          {
-            label: 'Раскладка EN→RU',
-            icon: Languages,
-            on: convert,
-            onToggle: toggleConvert,
-            title: 'Переключать набранное с английской раскладки на русскую',
-          },
-          {
-            label: 'Число целиком',
-            icon: Hash,
-            on: wholeNumbers,
-            onToggle: toggleWholeNumbers,
-            title: 'Число не входит в другое: 1 не найдёт 15, 150, 1,5; КТ315 не найдёт КТ3150',
-          },
-        ]}
-        viewToggles={[
-          {
-            label: `Выделять ${year} год`,
-            icon: CalendarCheck,
-            on: highlightYear,
-            onToggle: toggleHighlightYear,
-            title: `Выделять в таблицах детали ${year} года`,
-          },
-        ]}
-      >
-        <SearchBar value={draft} onChange={setDraft} onSubmit={submit} convert={convert} />
+      <AppHeader>
+        <SearchBar
+          value={draft}
+          onChange={setDraft}
+          onSubmit={submit}
+          convert={convert}
+          options={
+            <SearchOptions
+              narrowed={wholeNumbers}
+              search={[
+                {
+                  label: 'Раскладка EN→RU',
+                  icon: Languages,
+                  on: convert,
+                  onToggle: toggleConvert,
+                  title: 'Переключать набранное с английской раскладки на русскую',
+                },
+                {
+                  label: 'Число целиком',
+                  icon: Hash,
+                  on: wholeNumbers,
+                  onToggle: toggleWholeNumbers,
+                  title:
+                    'Число не входит в другое: 1 не найдёт 15, 150, 1,5; КТ315 не найдёт КТ3150',
+                },
+              ]}
+              view={[
+                {
+                  label: `Выделять ${year} год`,
+                  icon: CalendarCheck,
+                  on: highlightYear,
+                  onToggle: toggleHighlightYear,
+                  title: `Выделять в таблицах детали ${year} года`,
+                },
+              ]}
+            />
+          }
+        />
       </AppHeader>
       <main className="flex min-h-0 flex-1 flex-col">
         <SplitPanes

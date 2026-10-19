@@ -120,7 +120,7 @@ export function SearchHelp({ open, onClose }: { open: boolean; onClose: () => vo
         </Operator>
       </ul>
 
-      <SectionTitle>Число целиком (переключатель в меню)</SectionTitle>
+      <SectionTitle>Число целиком (кнопка «Параметры»)</SectionTitle>
       <p className="text-sm">
         Когда переключатель включён, число из запроса не может быть частью другого числа в названии:{' '}
         <Code>1</Code> найдёт «1 Вт» и «1кОм», но не 15, 150, 1,5 или 0,125; <Code>4.7</Code> не

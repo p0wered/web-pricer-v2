@@ -1,298 +1,134 @@
-import { CircleHelp, LogOut, type LucideIcon, Moon, Palette, Settings } from 'lucide-react';
-import {
-  type KeyboardEvent,
-  type PointerEvent,
-  type ReactNode,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-} from 'react';
+import { CircleHelp, LogOut, Moon, Palette, Settings } from 'lucide-react';
+import { type ReactNode, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useLogout } from '../api/queries.ts';
 import { SearchHelp } from '../features/search/search-help.tsx';
 import { useRowColors } from '../lib/row-colors.ts';
 import { useTheme } from '../lib/theme.ts';
 import { buttonClasses } from './button.tsx';
-import { popoverSurface } from './popover.tsx';
-import { focusOnClick } from './select.tsx';
+import {
+  DropdownMenu,
+  focusItem,
+  MENU_ICON,
+  MENU_ITEM,
+  MENU_TRIGGER_OPEN,
+  MenuSeparator,
+  MenuToggle,
+} from './menu.tsx';
 import { CARD, cx } from './ui.tsx';
 
-const MENU_ITEM =
-  'group flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-left text-sm whitespace-nowrap text-fg ' +
-  'transition-colors duration-100 outline-none hover:bg-row-hover focus-visible:bg-row-hover';
-
-/** Иконка пункта: при наведении или фокусе с клавиатуры — цвета акцента. */
-const MENU_ICON =
-  'text-subtle transition-colors duration-100 group-hover:text-accent group-focus-visible:text-accent';
-
-const menuItems = (menu: HTMLElement) => [
-  ...menu.querySelectorAll<HTMLElement>('[role="menuitem"],[role="menuitemcheckbox"]'),
-];
-
-/** Переключатель-«тумблер» в пункте меню (тёмная тема, цветные строки). */
-function MenuSwitch({ on }: { on: boolean }) {
-  return (
-    <span
-      aria-hidden
-      data-theme-animate
-      className={cx(
-        'ml-auto flex h-4 w-7 shrink-0 items-center rounded-full p-0.5 transition-colors duration-200 motion-reduce:transition-none',
-        on ? 'bg-accent' : 'bg-line-strong',
-      )}
-    >
-      <span
-        data-theme-animate
-        className={cx(
-          'size-3 rounded-full bg-white shadow-sm transition-transform duration-200 ease-[cubic-bezier(0.34,1.4,0.64,1)] motion-reduce:transition-none',
-          on && 'translate-x-3',
-        )}
-      />
-    </span>
-  );
-}
-
-/** Переключатель в меню, который задаёт страница (EN→RU, число целиком, подсветка года). */
-export interface MenuToggle {
-  label: string;
-  icon: LucideIcon;
-  on: boolean;
-  onToggle: () => void;
-  /** Подсказка при наведении: что именно меняет переключатель. */
-  title?: string;
-}
-
-/** Пункт меню с тумблером. Меню не закрывается: результат виден сразу, его можно вернуть. */
-function ToggleItem({ label, icon: Icon, on, onToggle, title }: MenuToggle) {
-  return (
-    <button
-      type="button"
-      role="menuitemcheckbox"
-      aria-checked={on}
-      tabIndex={-1}
-      title={title}
-      className={MENU_ITEM}
-      onPointerMove={focusItem}
-      onClick={onToggle}
-    >
-      <Icon aria-hidden size={15} strokeWidth={1.75} className={MENU_ICON} />
-      {label}
-      <MenuSwitch on={on} />
-    </button>
-  );
-}
-
 /**
- * Меню приложения (шаблон WAI-ARIA «menu button»): настройки, справка по поиску, переключатели
- * поиска, тема, цветные строки, выход. Панель позиционируется от ближайшего `relative`-предка —
- * под его правым краем.
+ * Меню приложения: настройки, справка по поиску, тема, цветные строки, выход. Панель — под
+ * правым краем ближайшего `relative`-предка (всей шапки).
  */
 export function AppMenu({
   settings,
   search = false,
-  searchToggles = [],
-  viewToggles = [],
   variant = 'secondary',
 }: {
   settings: boolean;
   /** Страница поиска: справка по поиску и переключатель цветных строк таблиц. */
   search?: boolean;
-  /** Переключатели поиска — отдельной группой после справки. */
-  searchToggles?: MenuToggle[];
-  /** Переключатели вида — после тёмной темы и цветных строк. */
-  viewToggles?: MenuToggle[];
   /** `ghost` — без фона в покое (страница настроек); по умолчанию — как кнопки в хедере поиска. */
   variant?: 'secondary' | 'ghost';
 }) {
-  const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  // Какой пункт получит фокус, когда панель откроется.
-  const focusOnOpen = useRef<'first' | 'last'>('first');
   const { theme, toggle } = useTheme();
   const rowColors = useRowColors();
   const [helpOpen, setHelpOpen] = useState(false);
   const logout = useLogout();
   const navigate = useNavigate();
-  const menuId = useId();
-
-  const show = (focus: 'first' | 'last') => {
-    focusOnOpen.current = focus;
-    setOpen(true);
-  };
-
-  const hide = (returnFocus = false) => {
-    setOpen(false);
-    if (returnFocus) triggerRef.current?.focus();
-  };
-
-  useEffect(() => {
-    const menu = menuRef.current;
-    if (!open || !menu) return;
-    const items = menuItems(menu);
-    (focusOnOpen.current === 'first' ? items[0] : items.at(-1))?.focus();
-
-    const onPointerDown = (event: Event) => {
-      const target = event.target as Node;
-      if (!menu.contains(target) && !triggerRef.current?.contains(target)) setOpen(false);
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    return () => document.removeEventListener('pointerdown', onPointerDown);
-  }, [open]);
-
-  const onTriggerKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
-    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-      event.preventDefault();
-      show(event.key === 'ArrowDown' ? 'first' : 'last');
-    }
-  };
-
-  const onMenuKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    const items = menuItems(event.currentTarget);
-    const index = items.indexOf(document.activeElement as HTMLElement);
-    const focus = (to: number) => {
-      event.preventDefault();
-      items[(to + items.length) % items.length]?.focus();
-    };
-    switch (event.key) {
-      case 'ArrowDown':
-        return focus(index + 1);
-      case 'ArrowUp':
-        return focus(index - 1);
-      case 'Home':
-        return focus(0);
-      case 'End':
-        return focus(items.length - 1);
-      case 'Escape':
-        event.preventDefault();
-        return hide(true);
-      case 'Tab':
-        // Фокус уходит дальше сам: закрытая панель inert, её пункты Tab пропускает.
-        return hide();
-      case ' ':
-        // Ссылку пробел не нажимает, а пункт меню должен.
-        if (event.target instanceof HTMLAnchorElement) {
-          event.preventDefault();
-          event.target.click();
-        }
-    }
-  };
 
   return (
     <>
-      <button
-        ref={triggerRef}
-        type="button"
-        aria-label="Меню"
-        title="Меню"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-controls={menuId}
-        onClick={(event) => {
-          focusOnClick(event);
-          if (open) hide();
-          else show('first');
-        }}
-        onKeyDown={onTriggerKeyDown}
+      <DropdownMenu
+        label="Меню"
+        triggerRef={triggerRef}
         // Бургер — сама иконка (полоски цвета текста): у ghost акцентом окрашивается цвет кнопки.
-        className={buttonClasses({
+        triggerClassName={buttonClasses({
           variant,
           size: 'lg',
           square: true,
-          className: cx(
-            'relative aria-expanded:border-accent/60 aria-expanded:bg-accent/12 aria-expanded:text-accent',
-            variant === 'ghost' && 'hover:text-accent',
-          ),
+          className: cx('relative', MENU_TRIGGER_OPEN, variant === 'ghost' && 'hover:text-accent'),
         })}
-      >
-        <span aria-hidden className="burger-bar" />
-        <span aria-hidden className="burger-bar" />
-        <span aria-hidden className="burger-bar" />
-      </button>
-
-      <div
-        ref={menuRef}
-        id={menuId}
-        role="menu"
-        aria-label="Меню"
-        inert={!open}
-        onKeyDown={onMenuKeyDown}
-        className={cx(popoverSurface(open), 'top-full right-0 mt-1.5 w-60 origin-top-right')}
-      >
-        {settings && (
-          <Link
-            to="/settings"
-            role="menuitem"
-            tabIndex={-1}
-            className={MENU_ITEM}
-            onPointerMove={focusItem}
-          >
-            <Settings aria-hidden size={15} strokeWidth={1.75} className={MENU_ICON} />
-            Настройки
-          </Link>
-        )}
-        {search && (
-          <button
-            type="button"
-            role="menuitem"
-            tabIndex={-1}
-            className={MENU_ITEM}
-            onPointerMove={focusItem}
-            onClick={() => {
-              hide();
-              setHelpOpen(true);
-            }}
-          >
-            <CircleHelp aria-hidden size={15} strokeWidth={1.75} className={MENU_ICON} />
-            Справка
-          </button>
-        )}
-        {(settings || search) && <div role="separator" className="mx-1 my-1 h-px bg-line" />}
-        {searchToggles.length > 0 && (
+        trigger={
           <>
-            {searchToggles.map((item) => (
-              <ToggleItem key={item.label} {...item} />
-            ))}
-            <div role="separator" className="mx-1 my-1 h-px bg-line" />
+            <span aria-hidden className="burger-bar" />
+            <span aria-hidden className="burger-bar" />
+            <span aria-hidden className="burger-bar" />
+          </>
+        }
+        panelClassName="right-0 w-56 origin-top-right"
+      >
+        {(hide) => (
+          <>
+            {settings && (
+              <Link
+                to="/settings"
+                role="menuitem"
+                tabIndex={-1}
+                className={MENU_ITEM}
+                onPointerMove={focusItem}
+              >
+                <Settings aria-hidden size={15} strokeWidth={1.75} className={MENU_ICON} />
+                Настройки
+              </Link>
+            )}
+            {search && (
+              <button
+                type="button"
+                role="menuitem"
+                tabIndex={-1}
+                className={MENU_ITEM}
+                onPointerMove={focusItem}
+                onClick={() => {
+                  hide();
+                  setHelpOpen(true);
+                }}
+              >
+                <CircleHelp aria-hidden size={15} strokeWidth={1.75} className={MENU_ICON} />
+                Справка
+              </button>
+            )}
+            {(settings || search) && <MenuSeparator />}
+            <MenuToggle label="Тёмная тема" icon={Moon} on={theme === 'dark'} onToggle={toggle} />
+            {search && (
+              <MenuToggle
+                label="Цветные строки"
+                icon={Palette}
+                on={rowColors.enabled}
+                onToggle={rowColors.toggle}
+              />
+            )}
+            <MenuSeparator />
+            <button
+              type="button"
+              role="menuitem"
+              tabIndex={-1}
+              disabled={logout.isPending}
+              className={cx(
+                MENU_ITEM,
+                'hover:bg-danger-soft hover:text-danger focus-visible:bg-danger-soft focus-visible:text-danger disabled:opacity-50',
+              )}
+              onPointerMove={focusItem}
+              onClick={() => {
+                hide();
+                logout.mutate(undefined, {
+                  onSettled: () => navigate('/login', { replace: true }),
+                });
+              }}
+            >
+              <LogOut
+                aria-hidden
+                size={15}
+                strokeWidth={1.75}
+                className="text-subtle transition-colors duration-100 group-hover:text-danger group-focus-visible:text-danger"
+              />
+              Выйти
+            </button>
           </>
         )}
-        <ToggleItem label="Тёмная тема" icon={Moon} on={theme === 'dark'} onToggle={toggle} />
-        {search && (
-          <ToggleItem
-            label="Цветные строки"
-            icon={Palette}
-            on={rowColors.enabled}
-            onToggle={rowColors.toggle}
-          />
-        )}
-        {viewToggles.map((item) => (
-          <ToggleItem key={item.label} {...item} />
-        ))}
-        <div role="separator" className="mx-1 my-1 h-px bg-line" />
-        <button
-          type="button"
-          role="menuitem"
-          tabIndex={-1}
-          disabled={logout.isPending}
-          className={cx(
-            MENU_ITEM,
-            'hover:bg-danger-soft hover:text-danger focus-visible:bg-danger-soft focus-visible:text-danger disabled:opacity-50',
-          )}
-          onPointerMove={focusItem}
-          onClick={() => {
-            hide();
-            logout.mutate(undefined, { onSettled: () => navigate('/login', { replace: true }) });
-          }}
-        >
-          <LogOut
-            aria-hidden
-            size={15}
-            strokeWidth={1.75}
-            className="text-subtle transition-colors duration-100 group-hover:text-danger group-focus-visible:text-danger"
-          />
-          Выйти
-        </button>
-      </div>
+      </DropdownMenu>
 
       {search && (
         <SearchHelp
@@ -308,23 +144,10 @@ export function AppMenu({
   );
 }
 
-/** Пункт под мышью получает фокус, чтобы стрелки продолжали с него. */
-function focusItem(event: PointerEvent<HTMLElement>) {
-  if (document.activeElement !== event.currentTarget) event.currentTarget.focus();
-}
-
 /**
  * Верхний блок страницы поиска: строка поиска и меню. Все элементы строки — высотой h-10.
  */
-export function AppHeader({
-  children,
-  searchToggles,
-  viewToggles,
-}: {
-  children: ReactNode;
-  searchToggles?: MenuToggle[];
-  viewToggles?: MenuToggle[];
-}) {
+export function AppHeader({ children }: { children: ReactNode }) {
   return (
     <header
       className={cx(
@@ -337,7 +160,7 @@ export function AppHeader({
         {children}
       </div>
       <nav className="ml-auto flex shrink-0 items-center" aria-label="Приложение">
-        <AppMenu settings search searchToggles={searchToggles} viewToggles={viewToggles} />
+        <AppMenu settings search />
       </nav>
     </header>
   );
