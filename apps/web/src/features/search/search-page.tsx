@@ -85,7 +85,7 @@ export function SearchPage() {
           options={
             <SearchOptions
               narrowed={wholeNumbers}
-              search={[
+              toggles={[
                 {
                   label: 'Раскладка EN→RU',
                   icon: Languages,
@@ -101,8 +101,6 @@ export function SearchPage() {
                   title:
                     'Число не входит в другое: 1 не найдёт 15, 150, 1,5; КТ315 не найдёт КТ3150',
                 },
-              ]}
-              view={[
                 {
                   label: `Выделять ${year} год`,
                   icon: CalendarCheck,

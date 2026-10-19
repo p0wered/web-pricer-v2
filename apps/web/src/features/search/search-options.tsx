@@ -4,17 +4,14 @@ import { buttonClasses } from '../../components/button.tsx';
 import {
   DropdownMenu,
   MENU_TRIGGER_OPEN,
-  MenuSeparator,
   MenuToggle,
   type MenuToggleProps,
 } from '../../components/menu.tsx';
 import { cx } from '../../components/ui.tsx';
 
 interface SearchOptionsProps {
-  /** Переключатели, которые меняют поиск. */
-  search: MenuToggleProps[];
-  /** Переключатели вида таблиц. */
-  view: MenuToggleProps[];
+  /** Переключатели поиска и вида таблиц — одним списком, без разделителей: их немного. */
+  toggles: MenuToggleProps[];
   /**
    * Включено что-то, что сужает выдачу («число целиком»): на кнопке — точка, чтобы закрытое меню
    * не прятало, почему нашлось меньше.
@@ -22,7 +19,7 @@ interface SearchOptionsProps {
   narrowed: boolean;
 }
 
-export function SearchOptions({ search, view, narrowed }: SearchOptionsProps) {
+export function SearchOptions({ toggles, narrowed }: SearchOptionsProps) {
   return (
     <div className="relative shrink-0">
       <DropdownMenu
@@ -46,17 +43,7 @@ export function SearchOptions({ search, view, narrowed }: SearchOptionsProps) {
         }
         panelClassName="right-0 w-60 origin-top-right"
       >
-        {() => (
-          <>
-            {search.map((item) => (
-              <MenuToggle key={item.label} {...item} />
-            ))}
-            {search.length > 0 && view.length > 0 && <MenuSeparator />}
-            {view.map((item) => (
-              <MenuToggle key={item.label} {...item} />
-            ))}
-          </>
-        )}
+        {() => toggles.map((item) => <MenuToggle key={item.label} {...item} />)}
       </DropdownMenu>
     </div>
   );
