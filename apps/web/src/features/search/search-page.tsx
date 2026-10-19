@@ -15,6 +15,7 @@ import { SearchBar } from './search-bar.tsx';
 import { SplitPanes } from './split-panes.tsx';
 
 const HIGHLIGHT_YEAR_KEY = 'webpricer.highlight-year';
+const WHOLE_NUMBERS_KEY = 'webpricer.whole-numbers';
 
 export function SearchPage() {
   const [params, setParams] = useSearchParams();
@@ -24,6 +25,7 @@ export function SearchPage() {
   const [highlightYear, setHighlightYear] = useState(
     () => readStored(HIGHLIGHT_YEAR_KEY) === 'true',
   );
+  const [wholeNumbers, setWholeNumbers] = useState(() => readStored(WHOLE_NUMBERS_KEY) === 'true');
   // Год берётся при открытии страницы: в новом году подсветка переключится сама.
   const [year] = useState(() => currentYear());
   const queryClient = useQueryClient();
@@ -41,8 +43,8 @@ export function SearchPage() {
     document.title = query ? `${query} — WebPricer` : 'Поиск — WebPricer';
   }, [query]);
 
-  const special = useSearchList(query, 'special', 'relevance');
-  const main = useSearchList(query, 'main', sort);
+  const special = useSearchList(query, 'special', 'relevance', wholeNumbers);
+  const main = useSearchList(query, 'main', sort, wholeNumbers);
 
   const submit = () => {
     const next = draft.trim();
@@ -62,6 +64,13 @@ export function SearchPage() {
     });
   };
 
+  const toggleWholeNumbers = () => {
+    setWholeNumbers((current) => {
+      writeStored(WHOLE_NUMBERS_KEY, String(!current));
+      return !current;
+    });
+  };
+
   const shownYear = highlightYear ? year : null;
   const specialColumns = useMemo(() => stopColumns(shownYear), [shownYear]);
   const mainColumns = useMemo(() => detailColumns(sort, setSort, shownYear), [sort, shownYear]);
@@ -75,19 +84,34 @@ export function SearchPage() {
           onChange={setDraft}
           onSubmit={submit}
           actions={
-            <Button
-              size="lg"
-              pressed={highlightYear}
-              onClick={toggleHighlightYear}
-              className="text-xs"
-              title={
-                highlightYear
-                  ? `Не выделять детали ${year} года`
-                  : `Выделить в таблицах детали ${year} года`
-              }
-            >
-              {year}
-            </Button>
+            <>
+              <Button
+                size="lg"
+                pressed={wholeNumbers}
+                onClick={toggleWholeNumbers}
+                className="text-xs"
+                title={
+                  wholeNumbers
+                    ? 'Числа ищутся целиком: 1 не находит 15, 150, 1,5. Нажмите, чтобы выключить'
+                    : 'Искать числа целиком: 1 не найдёт 15, 150, 1,5; КТ315 не найдёт КТ3150'
+                }
+              >
+                1≠15
+              </Button>
+              <Button
+                size="lg"
+                pressed={highlightYear}
+                onClick={toggleHighlightYear}
+                className="text-xs"
+                title={
+                  highlightYear
+                    ? `Не выделять детали ${year} года`
+                    : `Выделить в таблицах детали ${year} года`
+                }
+              >
+                {year}
+              </Button>
+            </>
           }
         />
       </AppHeader>
@@ -108,7 +132,7 @@ export function SearchPage() {
                 idle={!active}
                 idleText="Нет данных для отображения"
                 emptyText="В стоп-листе ничего не найдено"
-                resetKey={query}
+                resetKey={`${query}|${wholeNumbers}`}
               />
             </ResultPanel>
           }
@@ -127,7 +151,7 @@ export function SearchPage() {
                 idle={!active}
                 idleText="Нет данных для отображения"
                 emptyText="Ничего не найдено. Попробуйте сократить запрос или проверить раскладку."
-                resetKey={`${query}|${sort}`}
+                resetKey={`${query}|${sort}|${wholeNumbers}`}
               />
             </ResultPanel>
           }

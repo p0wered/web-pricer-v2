@@ -13,7 +13,7 @@ interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
-  /** Переключатели вида выдачи — после EN→RU (подсветка года). */
+  /** Переключатели выдачи — после EN→RU («число целиком», подсветка года). */
   actions?: ReactNode;
 }
 
@@ -56,8 +56,13 @@ export function SearchBar({ value, onChange, onSubmit, actions }: SearchBarProps
   };
 
   return (
-    <form role="search" onSubmit={submit} className="flex min-w-0 flex-1 items-center gap-2">
-      {/* На телефоне поле чуть уже, «Найти» — только иконка: так помещаются переключатели. */}
+    <form
+      role="search"
+      onSubmit={submit}
+      className="flex min-w-0 flex-1 flex-wrap items-center gap-2 sm:flex-nowrap"
+    >
+      {/* На телефоне поле чуть уже, «Найти» — только иконка; переключатели, которым не хватило
+          места, переносятся на вторую строку. */}
       <div className="relative min-w-34 flex-1 sm:min-w-40 lg:max-w-[640px]">
         <input
           ref={inputRef}

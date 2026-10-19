@@ -105,6 +105,15 @@ describe('GET /api/search', () => {
     expect(await names('?')).toEqual([]);
   });
 
+  it('с галочкой «число целиком» число не входит в другое число', async () => {
+    const total = async (query: Record<string, string>) =>
+      searchResponseSchema.parse((await search({ list: 'main', ...query })).body).total;
+    expect(await total({ q: 'кт31' })).toBe(1);
+    expect(await total({ q: 'кт31', wholeNumbers: 'true' })).toBe(0);
+    expect(await total({ q: 'кт315', wholeNumbers: 'true' })).toBe(1);
+    expect((await search({ q: 'кт315', list: 'main', wholeNumbers: 'maybe' })).status).toBe(400);
+  });
+
   it('сортирует по количеству', async () => {
     const parsed = searchResponseSchema.parse(
       (await search({ q: 'к', list: 'main', sort: 'qty_desc' })).body,
