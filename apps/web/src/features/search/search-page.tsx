@@ -1,11 +1,10 @@
 import type { SearchSort } from '@webpricer/shared';
 import { useQueryClient } from '@tanstack/react-query';
-import { Ban, Package } from 'lucide-react';
+import { Ban, CalendarCheck, Hash, Languages, Package } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useSearchList } from '../../api/queries.ts';
 import { AppHeader } from '../../components/app-header.tsx';
-import { Button } from '../../components/button.tsx';
 import { currentYear } from '../../lib/format.ts';
 import { readStored, writeStored } from '../../lib/storage.ts';
 import { detailColumns, stopColumns } from './columns.tsx';
@@ -16,16 +15,28 @@ import { SplitPanes } from './split-panes.tsx';
 
 const HIGHLIGHT_YEAR_KEY = 'webpricer.highlight-year';
 const WHOLE_NUMBERS_KEY = 'webpricer.whole-numbers';
+const LAYOUT_KEY = 'webpricer.layout-convert';
+
+/** Переключатель, который запоминается в браузере. */
+function useStoredToggle(key: string): [boolean, () => void] {
+  const [on, setOn] = useState(() => readStored(key) === 'true');
+  const toggle = () => {
+    setOn((current) => {
+      writeStored(key, String(!current));
+      return !current;
+    });
+  };
+  return [on, toggle];
+}
 
 export function SearchPage() {
   const [params, setParams] = useSearchParams();
   const query = (params.get('q') ?? '').trim();
   const [draft, setDraft] = useState(query);
   const [sort, setSort] = useState<SearchSort>('relevance');
-  const [highlightYear, setHighlightYear] = useState(
-    () => readStored(HIGHLIGHT_YEAR_KEY) === 'true',
-  );
-  const [wholeNumbers, setWholeNumbers] = useState(() => readStored(WHOLE_NUMBERS_KEY) === 'true');
+  const [highlightYear, toggleHighlightYear] = useStoredToggle(HIGHLIGHT_YEAR_KEY);
+  const [wholeNumbers, toggleWholeNumbers] = useStoredToggle(WHOLE_NUMBERS_KEY);
+  const [convert, toggleConvert] = useStoredToggle(LAYOUT_KEY);
   // Год берётся при открытии страницы: в новом году подсветка переключится сама.
   const [year] = useState(() => currentYear());
   const queryClient = useQueryClient();
@@ -57,20 +68,6 @@ export function SearchPage() {
     setParams(next ? { q: next } : {});
   };
 
-  const toggleHighlightYear = () => {
-    setHighlightYear((current) => {
-      writeStored(HIGHLIGHT_YEAR_KEY, String(!current));
-      return !current;
-    });
-  };
-
-  const toggleWholeNumbers = () => {
-    setWholeNumbers((current) => {
-      writeStored(WHOLE_NUMBERS_KEY, String(!current));
-      return !current;
-    });
-  };
-
   const shownYear = highlightYear ? year : null;
   const specialColumns = useMemo(() => stopColumns(shownYear), [shownYear]);
   const mainColumns = useMemo(() => detailColumns(sort, setSort, shownYear), [sort, shownYear]);
@@ -78,42 +75,34 @@ export function SearchPage() {
 
   return (
     <div className="flex h-full flex-col gap-3 p-3">
-      <AppHeader>
-        <SearchBar
-          value={draft}
-          onChange={setDraft}
-          onSubmit={submit}
-          actions={
-            <>
-              <Button
-                size="lg"
-                pressed={wholeNumbers}
-                onClick={toggleWholeNumbers}
-                className="text-xs"
-                title={
-                  wholeNumbers
-                    ? 'Числа ищутся целиком: 1 не находит 15, 150, 1,5. Нажмите, чтобы выключить'
-                    : 'Искать числа целиком: 1 не найдёт 15, 150, 1,5; КТ315 не найдёт КТ3150'
-                }
-              >
-                1≠15
-              </Button>
-              <Button
-                size="lg"
-                pressed={highlightYear}
-                onClick={toggleHighlightYear}
-                className="text-xs"
-                title={
-                  highlightYear
-                    ? `Не выделять детали ${year} года`
-                    : `Выделить в таблицах детали ${year} года`
-                }
-              >
-                {year}
-              </Button>
-            </>
-          }
-        />
+      <AppHeader
+        searchToggles={[
+          {
+            label: 'Раскладка EN→RU',
+            icon: Languages,
+            on: convert,
+            onToggle: toggleConvert,
+            title: 'Переключать набранное с английской раскладки на русскую',
+          },
+          {
+            label: 'Число целиком',
+            icon: Hash,
+            on: wholeNumbers,
+            onToggle: toggleWholeNumbers,
+            title: 'Число не входит в другое: 1 не найдёт 15, 150, 1,5; КТ315 не найдёт КТ3150',
+          },
+        ]}
+        viewToggles={[
+          {
+            label: `Выделять ${year} год`,
+            icon: CalendarCheck,
+            on: highlightYear,
+            onToggle: toggleHighlightYear,
+            title: `Выделять в таблицах детали ${year} года`,
+          },
+        ]}
+      >
+        <SearchBar value={draft} onChange={setDraft} onSubmit={submit} convert={convert} />
       </AppHeader>
       <main className="flex min-h-0 flex-1 flex-col">
         <SplitPanes

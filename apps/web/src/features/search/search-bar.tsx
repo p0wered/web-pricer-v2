@@ -1,10 +1,7 @@
 import { ClipboardPaste, Copy, Scissors, Search, X } from 'lucide-react';
-import { type FormEvent, type ReactNode, useRef, useState } from 'react';
+import { type FormEvent, useRef } from 'react';
 import { Button } from '../../components/button.tsx';
 import { applyLayoutConversion } from '../../lib/keyboard-layout.ts';
-import { readStored, writeStored } from '../../lib/storage.ts';
-
-const LAYOUT_KEY = 'webpricer.layout-convert';
 
 // Буфер обмена браузер даёт только на HTTPS (и localhost); на http-адресе кнопки неактивны.
 const clipboardAvailable = () => typeof navigator !== 'undefined' && Boolean(navigator.clipboard);
@@ -13,27 +10,18 @@ interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
-  /** Переключатели выдачи — после EN→RU («число целиком», подсветка года). */
-  actions?: ReactNode;
+  /** Переключатель EN→RU (в меню): набранное с английской раскладки переводится на русскую. */
+  convert: boolean;
 }
 
-export function SearchBar({ value, onChange, onSubmit, actions }: SearchBarProps) {
+export function SearchBar({ value, onChange, onSubmit, convert }: SearchBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [convert, setConvert] = useState(() => readStored(LAYOUT_KEY) === 'true');
   const clipboard = clipboardAvailable();
   const clipboardHint = clipboard ? undefined : 'Буфер обмена доступен только по HTTPS';
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
     onSubmit();
-  };
-
-  const toggleConvert = () => {
-    setConvert((current) => {
-      writeStored(LAYOUT_KEY, String(!current));
-      return !current;
-    });
-    inputRef.current?.focus();
   };
 
   const paste = async () => {
@@ -56,13 +44,8 @@ export function SearchBar({ value, onChange, onSubmit, actions }: SearchBarProps
   };
 
   return (
-    <form
-      role="search"
-      onSubmit={submit}
-      className="flex min-w-0 flex-1 flex-wrap items-center gap-2 sm:flex-nowrap"
-    >
-      {/* На телефоне поле чуть уже, «Найти» — только иконка; переключатели, которым не хватило
-          места, переносятся на вторую строку. */}
+    <form role="search" onSubmit={submit} className="flex min-w-0 flex-1 items-center gap-2">
+      {/* На телефоне «Найти» — только иконка, кнопки буфера обмена скрыты. */}
       <div className="relative min-w-34 flex-1 sm:min-w-40 lg:max-w-[640px]">
         <input
           ref={inputRef}
@@ -106,16 +89,6 @@ export function SearchBar({ value, onChange, onSubmit, actions }: SearchBarProps
       >
         <span className="hidden sm:inline">Найти</span>
       </Button>
-      <Button
-        size="lg"
-        pressed={convert}
-        onClick={toggleConvert}
-        className="text-xs"
-        title="Переключать набранное с английской раскладки на русскую"
-      >
-        EN→RU
-      </Button>
-      {actions}
       <div className="hidden items-center gap-2 sm:flex" role="group" aria-label="Буфер обмена">
         <Button
           size="lg"

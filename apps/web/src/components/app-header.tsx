@@ -1,4 +1,4 @@
-import { CircleHelp, LogOut, Moon, Palette, Settings } from 'lucide-react';
+import { CircleHelp, LogOut, type LucideIcon, Moon, Palette, Settings } from 'lucide-react';
 import {
   type KeyboardEvent,
   type PointerEvent,
@@ -19,7 +19,7 @@ import { focusOnClick } from './select.tsx';
 import { CARD, cx } from './ui.tsx';
 
 const MENU_ITEM =
-  'group flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-sm text-fg ' +
+  'group flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-left text-sm whitespace-nowrap text-fg ' +
   'transition-colors duration-100 outline-none hover:bg-row-hover focus-visible:bg-row-hover';
 
 /** Иконка пункта: при наведении или фокусе с клавиатуры — цвета акцента. */
@@ -52,19 +52,55 @@ function MenuSwitch({ on }: { on: boolean }) {
   );
 }
 
+/** Переключатель в меню, который задаёт страница (EN→RU, число целиком, подсветка года). */
+export interface MenuToggle {
+  label: string;
+  icon: LucideIcon;
+  on: boolean;
+  onToggle: () => void;
+  /** Подсказка при наведении: что именно меняет переключатель. */
+  title?: string;
+}
+
+/** Пункт меню с тумблером. Меню не закрывается: результат виден сразу, его можно вернуть. */
+function ToggleItem({ label, icon: Icon, on, onToggle, title }: MenuToggle) {
+  return (
+    <button
+      type="button"
+      role="menuitemcheckbox"
+      aria-checked={on}
+      tabIndex={-1}
+      title={title}
+      className={MENU_ITEM}
+      onPointerMove={focusItem}
+      onClick={onToggle}
+    >
+      <Icon aria-hidden size={15} strokeWidth={1.75} className={MENU_ICON} />
+      {label}
+      <MenuSwitch on={on} />
+    </button>
+  );
+}
+
 /**
- * Меню приложения (шаблон WAI-ARIA «menu button»): настройки, справка по поиску, тема,
- * цветные строки, выход. Панель позиционируется от ближайшего `relative`-предка — под его
- * правым краем.
+ * Меню приложения (шаблон WAI-ARIA «menu button»): настройки, справка по поиску, переключатели
+ * поиска, тема, цветные строки, выход. Панель позиционируется от ближайшего `relative`-предка —
+ * под его правым краем.
  */
 export function AppMenu({
   settings,
   search = false,
+  searchToggles = [],
+  viewToggles = [],
   variant = 'secondary',
 }: {
   settings: boolean;
   /** Страница поиска: справка по поиску и переключатель цветных строк таблиц. */
   search?: boolean;
+  /** Переключатели поиска — отдельной группой после справки. */
+  searchToggles?: MenuToggle[];
+  /** Переключатели вида — после тёмной темы и цветных строк. */
+  viewToggles?: MenuToggle[];
   /** `ghost` — без фона в покое (страница настроек); по умолчанию — как кнопки в хедере поиска. */
   variant?: 'secondary' | 'ghost';
 }) {
@@ -181,7 +217,7 @@ export function AppMenu({
         aria-label="Меню"
         inert={!open}
         onKeyDown={onMenuKeyDown}
-        className={cx(popoverSurface(open), 'top-full right-0 mt-1.5 w-56 origin-top-right')}
+        className={cx(popoverSurface(open), 'top-full right-0 mt-1.5 w-60 origin-top-right')}
       >
         {settings && (
           <Link
@@ -212,36 +248,26 @@ export function AppMenu({
           </button>
         )}
         {(settings || search) && <div role="separator" className="mx-1 my-1 h-px bg-line" />}
-        <button
-          type="button"
-          role="menuitemcheckbox"
-          aria-checked={theme === 'dark'}
-          tabIndex={-1}
-          className={MENU_ITEM}
-          onPointerMove={focusItem}
-          // Меню остаётся открытым: новую тему видно сразу, её можно вернуть обратно.
-          onClick={toggle}
-        >
-          <Moon aria-hidden size={15} strokeWidth={1.75} className={MENU_ICON} />
-          Тёмная тема
-          <MenuSwitch on={theme === 'dark'} />
-        </button>
-        {search && (
-          <button
-            type="button"
-            role="menuitemcheckbox"
-            aria-checked={rowColors.enabled}
-            tabIndex={-1}
-            className={MENU_ITEM}
-            onPointerMove={focusItem}
-            // Как с темой: меню не закрывается, результат виден сразу.
-            onClick={rowColors.toggle}
-          >
-            <Palette aria-hidden size={15} strokeWidth={1.75} className={MENU_ICON} />
-            Цветные строки
-            <MenuSwitch on={rowColors.enabled} />
-          </button>
+        {searchToggles.length > 0 && (
+          <>
+            {searchToggles.map((item) => (
+              <ToggleItem key={item.label} {...item} />
+            ))}
+            <div role="separator" className="mx-1 my-1 h-px bg-line" />
+          </>
         )}
+        <ToggleItem label="Тёмная тема" icon={Moon} on={theme === 'dark'} onToggle={toggle} />
+        {search && (
+          <ToggleItem
+            label="Цветные строки"
+            icon={Palette}
+            on={rowColors.enabled}
+            onToggle={rowColors.toggle}
+          />
+        )}
+        {viewToggles.map((item) => (
+          <ToggleItem key={item.label} {...item} />
+        ))}
         <div role="separator" className="mx-1 my-1 h-px bg-line" />
         <button
           type="button"
@@ -290,7 +316,15 @@ function focusItem(event: PointerEvent<HTMLElement>) {
 /**
  * Верхний блок страницы поиска: строка поиска и меню. Все элементы строки — высотой h-10.
  */
-export function AppHeader({ children }: { children: ReactNode }) {
+export function AppHeader({
+  children,
+  searchToggles,
+  viewToggles,
+}: {
+  children: ReactNode;
+  searchToggles?: MenuToggle[];
+  viewToggles?: MenuToggle[];
+}) {
   return (
     <header
       className={cx(
@@ -303,7 +337,7 @@ export function AppHeader({ children }: { children: ReactNode }) {
         {children}
       </div>
       <nav className="ml-auto flex shrink-0 items-center" aria-label="Приложение">
-        <AppMenu settings search />
+        <AppMenu settings search searchToggles={searchToggles} viewToggles={viewToggles} />
       </nav>
     </header>
   );
