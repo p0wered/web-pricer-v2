@@ -12,33 +12,28 @@ import { cx } from '../../components/ui.tsx';
 interface SearchOptionsProps {
   /** Переключатели поиска и вида таблиц — одним списком, без разделителей: их немного. */
   toggles: MenuToggleProps[];
-  /**
-   * Включено что-то, что сужает выдачу («число целиком»): на кнопке — точка, чтобы закрытое меню
-   * не прятало, почему нашлось меньше.
-   */
-  narrowed: boolean;
 }
 
-export function SearchOptions({ toggles, narrowed }: SearchOptionsProps) {
+export function SearchOptions({ toggles }: SearchOptionsProps) {
+  // Включён хоть один параметр — кнопка «нажата», как были EN→RU и год: закрытое меню не прячет,
+  // что поиск или таблицы работают не как обычно.
+  const active = toggles.filter((item) => item.on).map((item) => `«${item.label}»`);
   return (
     <div className="relative shrink-0">
       <DropdownMenu
         label="Параметры поиска"
-        title={narrowed ? 'Параметры поиска: включено «Число целиком»' : 'Параметры поиска'}
+        title={
+          active.length > 0 ? `Параметры поиска: включено ${active.join(', ')}` : 'Параметры поиска'
+        }
         triggerClassName={buttonClasses({
           size: 'lg',
-          className: cx('relative px-3', MENU_TRIGGER_OPEN),
+          pressed: active.length > 0,
+          className: cx('px-3', MENU_TRIGGER_OPEN),
         })}
         trigger={
           <>
             <SlidersHorizontal aria-hidden size={16} strokeWidth={1.75} />
             <span className="hidden lg:inline">Параметры</span>
-            {narrowed && (
-              <span
-                aria-hidden
-                className="absolute top-1.5 right-1.5 size-2 rounded-full bg-accent ring-2 ring-sunken"
-              />
-            )}
           </>
         }
         panelClassName="right-0 w-60 origin-top-right"

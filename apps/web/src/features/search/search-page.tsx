@@ -84,7 +84,6 @@ export function SearchPage() {
           convert={convert}
           options={
             <SearchOptions
-              narrowed={wholeNumbers}
               toggles={[
                 {
                   label: 'Раскладка EN→RU',
