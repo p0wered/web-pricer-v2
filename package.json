@@ -13,7 +13,7 @@
     "dev": "concurrently -n server,web -c blue,magenta \"PORT=3000 npm run dev -w @webpricer/server\" \"npm run dev -w @webpricer/web\"",
     "build": "npm run build -w @webpricer/web",
     "start": "npm run start -w @webpricer/server",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc -p tools",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
